@@ -305,7 +305,7 @@ Preparation notes:
     },
     {
         "role": "user",
-        "content": '400 g dry White Emergo beans or 2 cans of beans',
+        "content": "400 g dry White Emergo beans or 2 cans of beans",
     },
     {
         "role": "assistant",
@@ -342,20 +342,18 @@ openai = OpenAI()
 
 
 def parseIngredients(
-    ingredients: List[str],
-    lang: str,
-    defaultLang: str
+    ingredients: List[str], lang: str, defaultLang: str
 ) -> Generator[Ingredient, Any, IngredientsParseStatus]:
     status = IngredientsParseStatus.ok
 
-    if 'pl' in lang:
-        lang = 'pl'
-    elif 'en' in lang:
-        lang = 'en'
+    if "pl" in lang:
+        lang = "pl"
+    elif "en" in lang:
+        lang = "en"
     else:
         lang = defaultLang
 
-    messages = messages_pl if lang == 'pl' else messages_en
+    messages = messages_pl if lang == "pl" else messages_en
 
     for input_ingredient in ingredients:
         try:
@@ -411,7 +409,7 @@ parsingRegex = re.compile(
     re.IGNORECASE,
 )
 
-listSeparatorRegex = re.compile(r"\n?-\s+")
+listSeparatorRegex = re.compile(r"\s?\n?-\s+")
 noneRegex = re.compile(r"\s?None\s?", re.IGNORECASE)
 
 
@@ -430,31 +428,51 @@ def parseChatResponse(response: str) -> Generator[Tuple[str, str, str, str], Any
         if re.search(listSeparatorRegex, ingredients):
             ingredients = listSeparatorRegex.split(ingredients)
 
+        ingredientsLen = len(ingredients) if type(ingredients) is list else 1
+
         if re.search(listSeparatorRegex, unit):
             unit = listSeparatorRegex.split(unit)
-            unit[len(unit) : len(ingredients)] = "None"
-        elif type(ingredients) == list:
-            unit = list(repeat(unit, len(ingredients)))
+            unit[len(unit) : ingredientsLen] = repeat(
+                "None", ingredientsLen - len(unit)
+            )
+        elif type(ingredients) is list:
+            unit = list(repeat(unit, ingredientsLen))
 
         if re.search(listSeparatorRegex, quantity):
             quantity = listSeparatorRegex.split(quantity)
-            quantity[len(quantity) : len(ingredients)] = "None"
-        elif type(ingredients) == list:
-            quantity = list(repeat(quantity, len(ingredients)))
+            quantity[len(quantity) : ingredientsLen] = repeat(
+                "None", ingredientsLen - len(quantity)
+            )
+        elif type(ingredients) is list:
+            quantity = list(repeat(quantity, ingredientsLen))
 
         if re.search(listSeparatorRegex, notes):
             notes = listSeparatorRegex.split(notes)
-            notes[len(notes) : len(ingredients)] = "None"
-        elif type(ingredients) == list:
-            notes = list(repeat(notes, len(ingredients)))
+            notes[len(notes) : ingredientsLen] = repeat(
+                "None", ingredientsLen - len(notes)
+            )
+        elif type(ingredients) is list:
+            notes = list(repeat(notes, ingredientsLen))
 
         if (
-            type(ingredients) == str
-            and type(unit) == str
-            and type(quantity) == str
-            and type(notes) == str
+            type(ingredients) is str
+            and type(unit) is str
+            and type(quantity) is str
+            and type(notes) is str
         ):
             yield ingredients, unit, quantity, notes
         else:
-            assert len(ingredients) == len(unit) == len(quantity) == len(notes)
-            yield from zip(ingredients, unit, quantity, notes)
+            if not len(ingredients) == len(unit) == len(quantity) == len(notes):
+                raise UnableToParseAIResponseException()
+
+            yield from zip(
+                strip_whitespace(ingredients),  # type:ignore
+                strip_whitespace(unit),  # type:ignore
+                strip_whitespace(quantity),  # type:ignore
+                strip_whitespace(notes),  # type:ignore
+            )
+
+
+def strip_whitespace(elements: list[str]):
+    for el in elements:
+        yield el.strip()
