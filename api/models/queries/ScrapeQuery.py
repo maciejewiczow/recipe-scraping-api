@@ -5,4 +5,4 @@ from pydantic import BaseModel
 class ScrapeQuery(BaseModel):
     url: str
     parseIngredients: bool = False
-    defaultToLang: Union[Literal['en'], Literal['pl']] = 'pl'
+    defaultToLang: Union[Literal["en"], Literal["pl"]] = "pl"

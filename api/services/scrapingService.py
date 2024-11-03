@@ -1,4 +1,3 @@
-from typing import Tuple
 from recipe_scrapers import scrape_me
 from recipe_scrapers._exceptions import RecipeScrapersExceptions
 from api.models.Ingredient import Ingredient
@@ -31,7 +30,9 @@ def tryScrapeRecipe(url: str, doParseIngredients: bool, defaultLang: str):
 
     status = IngredientsParseStatus.ok
     for rg in rd["ingredient_groups"]:
-        ingredientGen = parseIngredients(rg.get("ingredients", []), rd.get('language', ''), defaultLang)
+        ingredientGen = parseIngredients(
+            rg.get("ingredients", []), rd.get("language", ""), defaultLang
+        )
         ig = IngredientGroup(
             name=rg.get("purpose", None),
             ingredients=(

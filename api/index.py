@@ -12,14 +12,22 @@ from api.services.scrapingService import UnableToParseRecipeException, tryScrape
 from api.utils.toJson import toJson
 
 api_key_header = "X-api-key"
-api_key_scheme_name = 'api_key'
+api_key_scheme_name = "api_key"
 
 info = Info(
     title="Recipe Scraping API",
     description="API allowing to try to scrape a recipe from a website using recipe-scrapers library",
     version="1.0.0",
 )
-app = OpenAPI(__name__, info=info, validation_error_status=400, security_schemes={api_key_scheme_name: {'type': 'apiKey', 'name': api_key_header, 'in': 'header' }})
+app = OpenAPI(
+    __name__,
+    info=info,
+    validation_error_status=400,
+    security_schemes={
+        api_key_scheme_name: {"type": "apiKey", "name": api_key_header, "in": "header"}
+    },
+)
+
 
 def verify_authentication(query: ScrapeQuery):
     if not query.parseIngredients:
@@ -38,6 +46,7 @@ def verify_authentication(query: ScrapeQuery):
     if suppliedKey != actualKey:
         return toJson(ErrorResponse(error="Unauthorized")), 401
 
+
 @app.get(
     "/recipe",
     summary="Try to scrape a recipe from a given website",
@@ -46,10 +55,10 @@ def verify_authentication(query: ScrapeQuery):
         HTTPStatus.UNPROCESSABLE_ENTITY: ErrorResponse,
         HTTPStatus.BAD_REQUEST: ValidationErrorModel,
         HTTPStatus.UNAUTHORIZED: ErrorResponse,
-        HTTPStatus.FORBIDDEN: ErrorResponse
+        HTTPStatus.FORBIDDEN: ErrorResponse,
     },
     tags=[Tag(name="Scraping")],
-    security=[{api_key_scheme_name: []}]
+    security=[{api_key_scheme_name: []}],
 )
 def scrape_recipe(query: ScrapeQuery):
     authResult = verify_authentication(query)
