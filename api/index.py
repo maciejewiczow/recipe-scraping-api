@@ -12,17 +12,17 @@ from api.services.scrapingService import UnableToParseRecipeException, tryScrape
 from api.utils.toJson import toJson
 
 api_key_header = "X-api-key"
+api_key_scheme_name = 'api_key'
 
 info = Info(
     title="Recipe Scraping API",
     description="API allowing to try to scrape a recipe from a website using recipe-scrapers library",
     version="1.0.0",
 )
-app = OpenAPI(__name__, info=info, validation_error_status=400, security_schemes={'api_key': {'type': 'apiKey', 'name': api_key_header, 'in': 'header' }})
+app = OpenAPI(__name__, info=info, validation_error_status=400, security_schemes={api_key_scheme_name: {'type': 'apiKey', 'name': api_key_header, 'in': 'header' }})
 
-@app.before_request
-def verify_authentication():
-    if request.path != "/recipe":
+def verify_authentication(query: ScrapeQuery):
+    if not query.parseIngredients:
         return
 
     suppliedKey = request.headers.get(api_key_header)
@@ -49,9 +49,14 @@ def verify_authentication():
         HTTPStatus.FORBIDDEN: ErrorResponse
     },
     tags=[Tag(name="Scraping")],
-    security=[{'api_key': []}]
+    security=[{api_key_scheme_name: []}]
 )
 def scrape_recipe(query: ScrapeQuery):
+    authResult = verify_authentication(query)
+
+    if authResult:
+        return authResult
+
     try:
         wildModeUsed, recipe, status = tryScrapeRecipe(
             query.url, query.parseIngredients, query.defaultToLang
@@ -72,7 +77,7 @@ def scrape_recipe(query: ScrapeQuery):
             200,
         )
     except UnableToParseRecipeException:
-        return ErrorResponse(error="Unable to scrape the recipe"), 422
+        return toJson(ErrorResponse(error="Unable to scrape the recipe")), 422
 
 
 if __name__ == "__main__":
