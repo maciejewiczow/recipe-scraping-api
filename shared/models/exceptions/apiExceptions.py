@@ -1,0 +1,3 @@
+
+class UnableToParseRecipeException(Exception):
+    pass

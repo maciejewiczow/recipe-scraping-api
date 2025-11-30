@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger index",
+            "name": "Python Debugger test",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceRoot}/__init__.py",
+            "program": "${workspaceRoot}/test.py",
             "console": "integratedTerminal"
         }
     ]

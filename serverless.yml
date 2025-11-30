@@ -1,0 +1,263 @@
+org: maciejcorp
+app: recipe-scraper
+service: recipe-scraper
+
+provider:
+  name: aws
+  runtime: python3.13
+  stage: prod
+  region: eu-north-1
+  architecture: arm64
+  # TODO: uncomment when domain
+  # domain:
+  #   name: ${params:domainName}
+  #   certificateArn: ${params:domainCertificateArn}
+  #   createRoute53Record: false
+  #   apiType: httpApi
+  #   endpointType: regional
+  httpApi:
+    id: !Ref Gateway
+  layers:
+    - !Ref SharedLambdaLayer
+
+functions:
+  # endpoint handlers
+  get-recipe:
+    handler: functions/get-recipe/handler.handler
+    environment:
+      USER_QUOTA_TABLE_NAME: !Ref UserRequestQuotaTable
+      RECIPES_TABLE_NAME: !Ref Recipes
+    events:
+      - httpApi:
+          path: /recipe/{recipeId}
+          method: get
+          authorizer:
+            type: jwt
+            id:
+              Ref: ApiGatewayAuthorizer
+  scrape-recipe:
+    handler: functions/scrape-recipe/handler.handler
+    events:
+      - httpApi:
+          path: /recipe/scrape
+          method: post
+          authorizer:
+            type: jwt
+            id:
+              Ref: ApiGatewayAuthorizer
+    environment:
+      USER_QUOTA_TABLE_NAME: !Ref UserRequestQuotaTable
+      RECIPES_TABLE_NAME: !Ref Recipes
+      PROCESS_INGREDIENTS_STEP_FN_ARN: ${self:resources.Outputs.ProcessIngredientsStepFn.Value}
+      RECIPE_TTL: ${param:recipeTTL}
+      SNS_PLARFORM_APPLICATION_ARN__ANDROID: ${param:snsAndroidPlatformApplicationArn}
+  parse-result-webhook:
+    handler: functions/parse-result-webhook/handler.handler
+    events:
+      - httpApi:
+          path: /ai/webhook
+          method: post
+    environment:
+      DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+
+  # iternal processing
+  assemble-recipe:
+    handler: functions/assemble-recipe/handler.handler
+    environment:
+      RECIPES_TABLE_NAME: !Ref Recipes
+      NOTIFICATION__BODY: ${param:recipeReadyNotificationBody}
+      NOTIFICATION__TITLE: ${param:recipeReadyNotificationTitle}
+  parse-ingredient-start:
+    handler: functions/parse-ingredient-start/handler.handler
+    environment:
+      AI__API_KEY: ${param:aiApiKey}
+      AI__BASE_URL: ${param:aiBaseUrl}
+      PROMPT_ID__PL: ${param:promptIdPL}
+      PROMPT_ID__EN: ${param:promptIdEN}
+      DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+  parse-ingredient-success:
+    handler: functions/parse-ingredient-success/handler.handler
+    environment:
+      AI__API_KEY: ${param:aiApiKey}
+      AI__BASE_URL: ${param:aiBaseUrl}
+      MAX_RETRY_COUNT: ${param:maxAiParseRetryCount}
+      DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+  parse-ingredient-fail:
+    handler: functions/parse-ingredient-fail/handler.handler
+    environment:
+      DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+
+# used within processIngredients state machine definition file
+custom:
+  parseIngredientStartFnName: !Ref ParseDashingredientDashstartLambdaFunction
+  parseIngredientFailFnName: !Ref ParseDashingredientDashfailLambdaFunction
+  parseIngredientSuccessFnName: !Ref ParseDashingredientDashsuccessLambdaFunction
+  assembleRecipeFnName: !Ref AssembleDashrecipeLambdaFunction
+  parseIngredientFailNotificationSNSTopic: !Ref OutOfCreditsAdminNotificationsTopic
+
+  pythonRequirements:
+    useUv: true
+    dockerizePip: non-linux
+
+stepFunctions:
+  stateMachines:
+    processIngredients:
+      name: ProcessIngredients
+      definition: ${file(functions/process-ingredients/stateMachine.asl.yml)}
+
+layers:
+  shared:
+    path: shared
+    compatibleRuntimes:
+      - python3.13
+
+resources:
+  Description: "CloudFormation template for ${self:service}"
+  Resources:
+    # SNS Topics
+    OutOfCreditsAdminNotificationsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        FifoTopic: true
+        ContentBasedDeduplication: true
+        TopicName: OutOfCreditsAdminNotifications.fifo
+
+    # DynamoDB Tables
+    Recipes:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Recipes
+        AttributeDefinitions:
+          - AttributeName: RecipeId
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: RecipeId
+            KeyType: HASH
+        TimeToLiveSpecification:
+          AttributeName: ExpiresAt
+          Enabled: true
+
+    UserRequestQuotaTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UserRequestQuota
+        AttributeDefinitions:
+          - AttributeName: UserId
+            AttributeType: S
+          - AttributeName: RequestTimestamp
+            AttributeType: "N"
+        KeySchema:
+          - AttributeName: UserId
+            KeyType: HASH
+          - AttributeName: RequestTimestamp
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: ExpiresAt
+          Enabled: true
+
+    OpenAiResponses:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: OpenAiResponses
+        AttributeDefinitions:
+          - AttributeName: ResponseId
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: ResponseId
+            KeyType: HASH
+
+    # Shared gateway
+    Gateway:
+      Type: AWS::ApiGatewayV2::Api
+      Properties:
+        Name: Gateway
+        ProtocolType: HTTP
+        # TODO: uncomment when domain
+        # DisableExecuteApiEndpoint: true
+    GatewayStage:
+      Type: AWS::ApiGatewayV2::Stage
+      Properties:
+        ApiId: !Ref Gateway
+        StageName: prod
+        AutoDeploy: true
+
+    # authorizer resources
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ReadAttributes:
+          - custom:RequestQuotaValue
+          - custom:RequestQuotaWindow
+        RefreshTokenValidity: 365
+        TokenValidityUnits:
+          RefreshToken: days
+        UserPoolId: !Ref UserPool
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        DeletionProtection: ACTIVE
+        AccountRecoverySetting:
+          RecoveryMechanisms:
+            - Name: verified_email
+              Priority: 1
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: true
+          InviteMessageTemplate:
+            EmailMessage: Your username is {username} and your temporary password is {####}
+            EmailSubject: Welcome to Recipebase Recipe Importer
+        EmailVerificationMessage: The verification code to your new account is {####}
+        EmailVerificationSubject: Verify your new account
+        VerificationMessageTemplate:
+          DefaultEmailOption: CONFIRM_WITH_CODE
+          EmailMessage: The verification code to your new account is {####}
+          EmailSubject: Verify your new account
+          EmailMessageByLink: Choose this link to {##verify your email##}
+          EmailSubjectByLink: Your confirmation link
+        UserPoolTier: LITE
+        Schema:
+          - AttributeDataType: Number
+            Mutable: true
+            Name: RequestQuotaValue
+            NumberAttributeConstraints:
+              MinValue: "1"
+          - AttributeDataType: String
+            Mutable: true
+            Name: RequestQuotaWindow
+      UpdateReplacePolicy: Retain
+      DeletionPolicy: Retain
+    ApiGatewayAuthorizer:
+      Type: AWS::ApiGatewayV2::Authorizer
+      Properties:
+        AuthorizerResultTtlInSeconds: 0
+        IdentitySource:
+          - $request.header.Authorization
+        Name: cognito-authorizer
+        ApiId:
+          Ref: Gateway
+        AuthorizerType: JWT
+        JwtConfiguration:
+          Audience:
+            - Ref: UserPoolClient
+          Issuer:
+            Fn::Join:
+              - ""
+              - - "https://cognito-idp."
+                - "${opt:region, self:provider.region}"
+                - ".amazonaws.com/"
+                - Ref: UserPool
+
+  Outputs:
+    Gateway:
+      Value: !Ref Gateway
+      Export:
+        Name: Gateway
+    ProcessIngredientsStepFn:
+      Value: !Ref ProcessIngredients
+    ApiEndpoint:
+      Value: !GetAtt Gateway.ApiEndpoint
+
+plugins:
+  - serverless-step-functions

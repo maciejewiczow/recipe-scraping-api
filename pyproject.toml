@@ -1,0 +1,13 @@
+[project]
+name = "recipe-scrapping-api"
+version = "0.1.0"
+requires-python = "==3.13.*"
+dependencies = [
+    "boto3>=1.28.0",
+    "boto3-stubs[dynamodb,stepfunctions,sns]",
+    "openai",
+    "pydantic",
+    "pydantic-settings",
+    "aws-lambda-powertools[parser]>=1.28.0",
+    "recipe-scrapers",
+]

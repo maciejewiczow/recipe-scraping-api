@@ -1,0 +1,6 @@
+{
+  "name": "Lambda python",
+  "fileTemplateName": "{{name}}.py",
+  "onlyAsPartOfGroup": false,
+  "disabled": false
+}
