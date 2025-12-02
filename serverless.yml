@@ -8,13 +8,6 @@ provider:
   stage: prod
   region: eu-north-1
   architecture: arm64
-  # TODO: uncomment when domain
-  # domain:
-  #   name: ${params:domainName}
-  #   certificateArn: ${params:domainCertificateArn}
-  #   createRoute53Record: false
-  #   apiType: httpApi
-  #   endpointType: regional
   httpApi:
     id: !Ref Gateway
   layers:
@@ -23,9 +16,9 @@ provider:
 functions:
   # endpoint handlers
   get-recipe:
-    handler: functions/get-recipe/handler.handler
+    handler: functions/get_recipe/handler.handler
     environment:
-      USER_QUOTA_TABLE_NAME: !Ref UserRequestQuotaTable
+      DYNAMO_USER_QUOTA_TABLE_NAME: !Ref UserRequestQuotaTable
       RECIPES_TABLE_NAME: !Ref Recipes
     events:
       - httpApi:
@@ -35,8 +28,20 @@ functions:
             type: jwt
             id:
               Ref: ApiGatewayAuthorizer
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:Query
+            Resource:
+              - !GetAtt Recipes.Arn
+              - !GetAtt UserRequestQuotaTable.Arn
   scrape-recipe:
-    handler: functions/scrape-recipe/handler.handler
+    handler: functions/scrape_recipe/handler.handler
     events:
       - httpApi:
           path: /recipe/scrape
@@ -45,47 +50,136 @@ functions:
             type: jwt
             id:
               Ref: ApiGatewayAuthorizer
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:Query
+            Resource:
+              - !GetAtt Recipes.Arn
+              - !GetAtt UserRequestQuotaTable.Arn
+          - Effect: Allow
+            Action:
+              - states:StartExecution
+            Resource: ${self:resources.Outputs.ProcessIngredientsStepFn.Value}
+          - Effect: Allow
+            Action:
+              - sns:CreatePlatformEndpoint
+            Resource: ${param:snsAndroidPlatformApplicationArn}
     environment:
-      USER_QUOTA_TABLE_NAME: !Ref UserRequestQuotaTable
+      DYNAMO_USER_QUOTA_TABLE_NAME: !Ref UserRequestQuotaTable
       RECIPES_TABLE_NAME: !Ref Recipes
       PROCESS_INGREDIENTS_STEP_FN_ARN: ${self:resources.Outputs.ProcessIngredientsStepFn.Value}
       RECIPE_TTL: ${param:recipeTTL}
       SNS_PLARFORM_APPLICATION_ARN__ANDROID: ${param:snsAndroidPlatformApplicationArn}
   parse-result-webhook:
-    handler: functions/parse-result-webhook/handler.handler
+    handler: functions/parse_result_webhook/handler.handler
     events:
       - httpApi:
           path: /ai/webhook
           method: post
     environment:
       DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+      AI__API_KEY: ${param:aiApiKey}
+      AI__BASE_URL: ${param:aiBaseUrl}
+      AI__WEBHOOK_SECRET: ${param:aiWebhookSecret}
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+            Resource: !GetAtt OpenAiResponses.Arn
+          - Effect: Allow
+            Action:
+              - states:SendTaskSuccess
+              - states:SendTaskFailure
+            Resource: ${self:resources.Outputs.ProcessIngredientsStepFn.Value}
 
   # iternal processing
   assemble-recipe:
-    handler: functions/assemble-recipe/handler.handler
+    handler: functions/assemble_recipe/handler.handler
     environment:
       RECIPES_TABLE_NAME: !Ref Recipes
       NOTIFICATION__BODY: ${param:recipeReadyNotificationBody}
       NOTIFICATION__TITLE: ${param:recipeReadyNotificationTitle}
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+            Resource: !GetAtt Recipes.Arn
+          - Effect: Allow
+            Action:
+              - sns:Publish
+              - sns:DeleteEndpoint
+            Resource: ${param:snsAndroidPlatformApplicationArn}
+
   parse-ingredient-start:
-    handler: functions/parse-ingredient-start/handler.handler
+    handler: functions/parse_ingredient_start/handler.handler
     environment:
       AI__API_KEY: ${param:aiApiKey}
       AI__BASE_URL: ${param:aiBaseUrl}
+      AI__MODEL_NAME: ${param:aiModelName}
       PROMPT_ID__PL: ${param:promptIdPL}
       PROMPT_ID__EN: ${param:promptIdEN}
       DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            Resource: !GetAtt OpenAiResponses.Arn
   parse-ingredient-success:
-    handler: functions/parse-ingredient-success/handler.handler
+    handler: functions/parse_ingredient_success/handler.handler
     environment:
       AI__API_KEY: ${param:aiApiKey}
       AI__BASE_URL: ${param:aiBaseUrl}
       MAX_RETRY_COUNT: ${param:maxAiParseRetryCount}
       DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:DeleteItem
+            Resource: !GetAtt OpenAiResponses.Arn
   parse-ingredient-fail:
-    handler: functions/parse-ingredient-fail/handler.handler
+    handler: functions/parse_ingredient_fail/handler.handler
     environment:
       DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:DeleteItem
+            Resource: !GetAtt OpenAiResponses.Arn
+  parse-ingr-prep-retry:
+    handler: functions/parse_ingredient_prepare_for_retry/handler.handler
+    environment:
+      DYNAMO_RESPONSES_TABLE_NAME: !Ref OpenAiResponses
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+            Resource: !GetAtt OpenAiResponses.Arn
 
 # used within processIngredients state machine definition file
 custom:
@@ -94,26 +188,58 @@ custom:
   parseIngredientSuccessFnName: !Ref ParseDashingredientDashsuccessLambdaFunction
   assembleRecipeFnName: !Ref AssembleDashrecipeLambdaFunction
   parseIngredientFailNotificationSNSTopic: !Ref OutOfCreditsAdminNotificationsTopic
+  prepareForRetryFunctionArn: !Ref ParseDashingrDashprepDashretryLambdaFunction
 
   pythonRequirements:
     useUv: true
     dockerizePip: non-linux
+    slim: true
+    slimPatterns:
+      - '**/node_modules'
+      - '**/.vscode'
+      - '**/.venv'
+      - 'testing.ipynb'
+      - '.env'
+      - '**/package.json'
+      - '**/package-lock.json'
+  customDomain:
+    domainName: ${param:domainName}
+    stage: prod
+    basePath: prod
+    createRoute53Record: false
+    createRoute53IPv6Record: false
+    endpointType: REGIONAL
+    apiType: http
+    autoDomain: true
+    certificateArn: ${param:domainCertificateArn}
 
 stepFunctions:
   stateMachines:
     processIngredients:
       name: ProcessIngredients
-      definition: ${file(functions/process-ingredients/stateMachine.asl.yml)}
+      loggingConfig:
+        level: ALL
+        includeExecutionData: true
+        destinations:
+          - !GetAtt ProcessIngredientsLogGroup.Arn
+      definition: ${file(functions/process_ingredients/stateMachine.asl.yml)}
 
 layers:
   shared:
-    path: shared
+    path: lib
+    compatibleArchitectures:
+      - arm64
     compatibleRuntimes:
       - python3.13
 
 resources:
   Description: "CloudFormation template for ${self:service}"
   Resources:
+    ProcessIngredientsLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/stepfunctions/processIngredients_prod
+
     # SNS Topics
     OutOfCreditsAdminNotificationsTopic:
       Type: AWS::SNS::Topic
@@ -175,14 +301,19 @@ resources:
       Properties:
         Name: Gateway
         ProtocolType: HTTP
-        # TODO: uncomment when domain
-        # DisableExecuteApiEndpoint: true
+        DisableExecuteApiEndpoint: true
     GatewayStage:
       Type: AWS::ApiGatewayV2::Stage
       Properties:
         ApiId: !Ref Gateway
         StageName: prod
         AutoDeploy: true
+    GatewayDomainMapping:
+      Type: AWS::ApiGatewayV2::ApiMapping
+      Properties:
+        ApiId: !Ref Gateway
+        DomainName: ${param:domainName}
+        Stage: prod
 
     # authorizer resources
     UserPoolClient:
@@ -261,3 +392,4 @@ resources:
 
 plugins:
   - serverless-step-functions
+  - serverless-domain-manager

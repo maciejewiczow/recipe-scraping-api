@@ -1,0 +1,2 @@
+class FailedToParseAIOutput(Exception):
+    pass
