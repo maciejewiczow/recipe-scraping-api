@@ -60,7 +60,7 @@ def handler(
                 log.warning(
                     "Original ingredient not found by id in the recipe",
                     extra={
-                        "recipeId": recipeId,
+                        "recipe": recipeItem.Content.model_dump(),
                         "originalIngredientId": parseResult.originalIngredient.ingredientId,
                     },
                 )
