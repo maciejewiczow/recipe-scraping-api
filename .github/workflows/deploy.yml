@@ -1,0 +1,43 @@
+name: Deploy api
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-24.04-arm
+    environment: Production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup node
+        uses: actions/setup-node@v5
+      - name: Setup python for scripts
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install serverless
+        run: npm ci
+      - name: Install required serverless plugins
+        run: python scripts/install-serverless-plugins.py
+      - name: Serverless deploy
+        env:
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+          DOMAIN_CERTIFICATE_ARN: ${{ secrets.DOMAIN_CERT_ARN }}
+          AI_WEBHOOK_SECRET: ${{ secrets.AI_WEBHOOK_SECRET }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          SNS_ANDROID_PLATFORM_APPLICATION_ARN: ${{ secrets.SNS_ANDROID_PLATFORM_APPLICATION_ARN }}
+        run: >
+          npx serverless deploy
+            --param "recipeTTL=${{ vars.RECIPE_TTL }}"
+            --param "recipeReadyNotificationBody=${{ vars.RECIPE_READY_NOTIFICATION_BODY }}"
+            --param "recipeReadyNotificationTitle=${{ vars.RECIPE_READY_NOTIFICATION_TITLE }}"
+            --param "aiBaseUrl=${{ vars.AI_API_BASE_URL }}"
+            --param "promptIdPL=${{ vars.AI_PARSING_PROMPT_ID_PL }}"
+            --param "promptIdEN=${{ vars.AI_PARSING_PROMPT_ID_EN }}"
+            --param "maxAiParseRetryCount=${{ vars.MAX_AI_PARSE_RETRY_COUNT }}"
+            --param "domainName=${{ vars.DOMAIN_NAME }}"
+            --param "aiModelName=${{ vars.AI_MODEL_NAME }}"

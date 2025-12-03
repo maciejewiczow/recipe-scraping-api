@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "serverless-domain-manager": "^8.0.0",
-    "serverless-step-functions": "^3.23.3"
+    "serverless-step-functions": "^3.23.3",
+    "serverless": "4.26.1"
   }
 }
