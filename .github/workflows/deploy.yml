@@ -34,7 +34,7 @@ jobs:
           AI_WEBHOOK_SECRET: ${{ secrets.AI_WEBHOOK_SECRET }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           SNS_ANDROID_PLATFORM_APPLICATION_ARN: ${{ secrets.SNS_ANDROID_PLATFORM_APPLICATION_ARN }}
-        run: >
+        run: |
           set -x
           output=$(npx serverless deploy \
             --param "recipeTTL=${{ vars.RECIPE_TTL }}" \
@@ -47,7 +47,6 @@ jobs:
             --param "domainName=${{ vars.DOMAIN_NAME }}" \
             --param "aiModelName=${{ vars.AI_MODEL_NAME }}")
           set +x
-
           echo "command-output=$output" >> $GITHUB_OUTPUT
 
       - name: Swallow bogus serverless error
