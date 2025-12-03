@@ -383,8 +383,6 @@ resources:
   Outputs:
     Gateway:
       Value: !Ref Gateway
-      Export:
-        Name: Gateway
     ProcessIngredientsStepFn:
       Value: !Ref ProcessIngredients
     ApiEndpoint:
