@@ -11,6 +11,6 @@ for depName in deps.keys():
     if depName.startswith("serverless-"):
         subprocess.run(
             ["npx", "serverless", "plugin", "install", "-n", depName],
-            stdin=subprocess.STD_OUTPUT_HANDLE,
-            stderr=subprocess.STD_ERROR_HANDLE,
+            stdin=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
