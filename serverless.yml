@@ -217,11 +217,6 @@ stepFunctions:
   stateMachines:
     processIngredients:
       name: ProcessIngredients
-      loggingConfig:
-        level: ALL
-        includeExecutionData: true
-        destinations:
-          - !GetAtt ProcessIngredientsLogGroup.Arn
       definition: ${file(functions/process_ingredients/stateMachine.asl.yml)}
 
 layers:
@@ -235,11 +230,6 @@ layers:
 resources:
   Description: "CloudFormation template for ${self:service}"
   Resources:
-    ProcessIngredientsLogGroup:
-      Type: AWS::Logs::LogGroup
-      Properties:
-        LogGroupName: /aws/stepfunctions/processIngredients_prod
-
     # SNS Topics
     OutOfCreditsAdminNotificationsTopic:
       Type: AWS::SNS::Topic
