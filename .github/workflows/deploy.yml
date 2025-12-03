@@ -44,4 +44,4 @@ jobs:
             --param "promptIdEN=${{ vars.AI_PARSING_PROMPT_ID_EN }}" \
             --param "maxAiParseRetryCount=${{ vars.MAX_AI_PARSE_RETRY_COUNT }}" \
             --param "domainName=${{ vars.DOMAIN_NAME }}" \
-            --param "aiModelName=${{ vars.AI_MODEL_NAME }}" | tee --output-error warn /dev/null | grep -qs "ServerlessError2: Could not resolve provider.httpApi.id parameter. Expected params.ApiId to be a string" && false || true
+            --param "aiModelName=${{ vars.AI_MODEL_NAME }}" | tee --output-error warn | grep -qs "ServerlessError2: Could not resolve provider.httpApi.id parameter. Expected params.ApiId to be a string"
