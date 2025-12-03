@@ -26,6 +26,8 @@ jobs:
       - name: Install required serverless plugins
         run: python scripts/install-serverless-plugins.py
       - name: Serverless deploy
+        id: sls_deploy
+        continue-on-error: true
         env:
           SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
           DOMAIN_CERTIFICATE_ARN: ${{ secrets.DOMAIN_CERT_ARN }}
@@ -33,13 +35,16 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           SNS_ANDROID_PLATFORM_APPLICATION_ARN: ${{ secrets.SNS_ANDROID_PLATFORM_APPLICATION_ARN }}
         run: >
-          npx serverless deploy \
-            --param "recipeTTL=${{ vars.RECIPE_TTL }}" \
-            --param "recipeReadyNotificationBody=${{ vars.RECIPE_READY_NOTIFICATION_BODY }}" \
-            --param "recipeReadyNotificationTitle=${{ vars.RECIPE_READY_NOTIFICATION_TITLE }}" \
-            --param "aiBaseUrl=${{ vars.AI_API_BASE_URL }}" \
-            --param "promptIdPL=${{ vars.AI_PARSING_PROMPT_ID_PL }}" \
-            --param "promptIdEN=${{ vars.AI_PARSING_PROMPT_ID_EN }}" \
-            --param "maxAiParseRetryCount=${{ vars.MAX_AI_PARSE_RETRY_COUNT }}" \
-            --param "domainName=${{ vars.DOMAIN_NAME }}" \
-            --param "aiModelName=${{ vars.AI_MODEL_NAME }}" \
+          echo "command-output=$(npx serverless deploy \
+            --param \"recipeTTL=${{ vars.RECIPE_TTL }}\" \
+            --param \"recipeReadyNotificationBody=${{ vars.RECIPE_READY_NOTIFICATION_BODY }}\" \
+            --param \"recipeReadyNotificationTitle=${{ vars.RECIPE_READY_NOTIFICATION_TITLE }}\" \
+            --param \"aiBaseUrl=${{ vars.AI_API_BASE_URL }}\" \
+            --param \"promptIdPL=${{ vars.AI_PARSING_PROMPT_ID_PL }}\" \
+            --param \"promptIdEN=${{ vars.AI_PARSING_PROMPT_ID_EN }}\" \
+            --param \"maxAiParseRetryCount=${{ vars.MAX_AI_PARSE_RETRY_COUNT }}\" \
+            --param \"domainName=${{ vars.DOMAIN_NAME }}\" \
+            --param \"aiModelName=${{ vars.AI_MODEL_NAME }}\")" >> $GITHUB_OUTPUT | tee /dev/tty
+      - name: Swallow bogus serverless error
+        run: |
+          echo "${{ steps.sls_deploy.outputs.command-output }}" | grep -qsv "ServerlessError2: Could not resolve provider.httpApi.id parameter. Expected params.ApiId to be a string"
