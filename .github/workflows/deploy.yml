@@ -46,7 +46,7 @@ jobs:
             --param "domainName=${{ vars.DOMAIN_NAME }}" \
             --param "aiModelName=${{ vars.AI_MODEL_NAME }}" 2>&1 | tee --output-error=warn deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter";
 
-          deploy_exit=${PIPESTATUS[0]};
+          deploy_exit=$?;
 
           cat deploy.log;
 
