@@ -34,7 +34,7 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           SNS_ANDROID_PLATFORM_APPLICATION_ARN: ${{ secrets.SNS_ANDROID_PLATFORM_APPLICATION_ARN }}
         run: |
-          set -x
+          set -x;
           npx serverless deploy \
             --param "recipeTTL=${{ vars.RECIPE_TTL }}" \
             --param "recipeReadyNotificationBody=${{ vars.RECIPE_READY_NOTIFICATION_BODY }}" \
