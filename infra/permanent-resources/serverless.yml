@@ -1,0 +1,118 @@
+provider:
+  name: aws
+  stage: prod
+  stackName: RecipeScraperPermanentResourcesProd
+
+service: recie-scrapers-premanent-resources
+
+resources:
+  Description: "CloudFormation template for recipe-scraper prod - permanent resources"
+  Resources:
+    # SNS Topics
+    OutOfCreditsAdminNotificationsFifoTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        FifoTopic: true
+        ContentBasedDeduplication: true
+        TopicName: OutOfCreditsAdminNotifications.fifo
+    OutOfCreditsAdminNotificationQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: OutOfCreditsAdminNotificationQueue.fifo
+        FifoQueue: true
+    QueueSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        TopicArn: !Ref OutOfCreditsAdminNotificationsFifoTopic
+        Protocol: sqs
+        Endpoint: !GetAtt OutOfCreditsAdminNotificationQueue.Arn
+    OutOfCreditsAdminNotificationEmailTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: OutOfCreditsAdminNotificationEmail
+
+    # DynamoDB Tables
+    Recipes:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Recipes
+        DeletionProtectionEnabled: true
+        AttributeDefinitions:
+          - AttributeName: RecipeId
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: RecipeId
+            KeyType: HASH
+        TimeToLiveSpecification:
+          AttributeName: ExpiresAt
+          Enabled: true
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+
+    UserRequestQuotaTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UserRequestQuota
+        DeletionProtectionEnabled: true
+        AttributeDefinitions:
+          - AttributeName: UserId
+            AttributeType: S
+          - AttributeName: RequestTimestamp
+            AttributeType: "N"
+        KeySchema:
+          - AttributeName: UserId
+            KeyType: HASH
+          - AttributeName: RequestTimestamp
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: ExpiresAt
+          Enabled: true
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+
+    OpenAiResponses:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: OpenAiResponses
+        DeletionProtectionEnabled: true
+        AttributeDefinitions:
+          - AttributeName: ResponseId
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: ResponseId
+            KeyType: HASH
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+
+  Outputs:
+    RecipesTableName:
+      Value: !Ref Recipes
+      Export:
+        Name: !Sub "${AWS::StackName}-RecipesTableName"
+    RecipesTableArn:
+      Value: !GetAtt Recipes.Arn
+      Export:
+        Name: !Sub "${AWS::StackName}-RecipesTableArn"
+    UserQuotaTableName:
+      Value: !Ref UserRequestQuotaTable
+      Export:
+        Name: !Sub "${AWS::StackName}-UserQuotaTableName"
+    UserQuotaTableArn:
+      Value: !GetAtt UserRequestQuotaTable.Arn
+      Export:
+        Name: !Sub "${AWS::StackName}-UserQuotaTableArn"
+    OpenAiResponsesTableName:
+      Value: !Ref OpenAiResponses
+      Export:
+        Name: !Sub "${AWS::StackName}-OpenAiResponsesTableName"
+    OpenAiResponsesTableArn:
+      Value: !GetAtt OpenAiResponses.Arn
+      Export:
+        Name: !Sub "${AWS::StackName}-OpenAiResponsesTableArn"
+    OutOfCreditsAdminNotificationsTopic:
+      Value: !Ref OutOfCreditsAdminNotificationsFifoTopic
+      Export:
+        Name: !Sub "${AWS::StackName}-OutOfCreditsAdminNotificationsTopic"

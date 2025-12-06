@@ -25,6 +25,32 @@ jobs:
         run: npm ci
       - name: Install required serverless plugins
         run: python scripts/install-serverless-plugins.py
+      - name: UV sync
+        run: uv sync
+      - name: Get user-pool remplate changes
+        id: changes_user_pool
+        uses: step-security/changed-files@v46
+        with:
+          files: |
+            infra/user-pool/serverless.yml
+      - name: Get permanent-resources remplate changes
+        id: changes_permanent_resources
+        uses: step-security/changed-files@v46
+        with:
+          files: |
+            infra/permanent-resources/serverless.yml
+      - name: Deploy user-pool
+        if: steps.changes_user_pool.outputs.any_changed == 'true'
+        env:
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+        working-directory: infra/user-pool
+        run: npx serverless deploy --verbose
+      - name: Deploy permanent-resources
+        if: steps.changes_permanent_resources.outputs.any_changed == 'true'
+        env:
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+        working-directory: infra/permanent-resources
+        run: npx serverless deploy --verbose
       - name: Serverless deploy
         id: sls_deploy
         env:
@@ -44,7 +70,7 @@ jobs:
             --param "promptIdEN=${{ vars.AI_PARSING_PROMPT_ID_EN }}" \
             --param "maxAiParseRetryCount=${{ vars.MAX_AI_PARSE_RETRY_COUNT }}" \
             --param "domainName=${{ vars.DOMAIN_NAME }}" \
-            --param "aiModelName=${{ vars.AI_MODEL_NAME }}" 2>&1 | tee --output-error=warn deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter";
+            --param "aiModelName=${{ vars.AI_MODEL_NAME }}" --verbose 2>&1 | tee --output-error=warn deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter";
 
           deploy_exit=$?;
 

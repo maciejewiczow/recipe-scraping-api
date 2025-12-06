@@ -1,0 +1,69 @@
+provider:
+  name: aws
+  stage: prod
+  stackName: RecipeScraperCognitoProd
+
+service: recie-scrapers-user-pool
+
+resources:
+  Description: CloudFormation stack for recipe scraper prod - user pool related resources
+
+  Resources:
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: RecipebaseUserPoolProd
+        DeletionProtection: ACTIVE
+        AccountRecoverySetting:
+          RecoveryMechanisms:
+            - Name: verified_email
+              Priority: 1
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: true
+          InviteMessageTemplate:
+            EmailMessage: Your username is {username} and your temporary password is {####}
+            EmailSubject: Welcome to Recipebase Recipe Importer
+        EmailVerificationMessage: The verification code to your new account is {####}
+        EmailVerificationSubject: Verify your new account
+        VerificationMessageTemplate:
+          DefaultEmailOption: CONFIRM_WITH_CODE
+          EmailMessage: The verification code to your new account is {####}
+          EmailSubject: Verify your new account
+          EmailMessageByLink: Choose this link to {##verify your email##}
+          EmailSubjectByLink: Your confirmation link
+        UserPoolTier: LITE
+        Schema:
+          - AttributeDataType: Number
+            Mutable: true
+            Name: RequestQuotaValue
+            NumberAttributeConstraints:
+              MinValue: "1"
+          - AttributeDataType: String
+            Mutable: true
+            Name: RequestQuotaWindow
+      UpdateReplacePolicy: Retain
+      DeletionPolicy: Retain
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ReadAttributes:
+          - custom:RequestQuotaValue
+          - custom:RequestQuotaWindow
+        RefreshTokenValidity: 365
+        TokenValidityUnits:
+          RefreshToken: days
+          AccessToken: hours
+          IdToken: hours
+        UserPoolId: !Ref UserPool
+        AccessTokenValidity: 5
+        IdTokenValidity: 5
+
+  Outputs:
+    UserPoolClient:
+      Value: !Ref UserPoolClient
+      Export:
+        Name: !Sub "${AWS::StackName}-UserPoolClient"
+    UserPool:
+      Value: !Ref UserPool
+      Export:
+        Name: !Sub "${AWS::StackName}-UserPool"
