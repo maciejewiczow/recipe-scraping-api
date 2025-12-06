@@ -3,6 +3,8 @@ provider:
   stage: prod
   stackName: RecipeScraperCognitoProd
 
+org: maciejcorp
+app: recipe-scraper
 service: recie-scrapers-user-pool
 
 resources:
