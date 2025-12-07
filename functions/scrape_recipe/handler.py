@@ -41,6 +41,7 @@ log = Logger("scrape-recipe")
 
 
 @log.inject_lambda_context(log_event=True)
+@dump_response
 @http_endpoint(
     log,
     responses=[
@@ -51,7 +52,6 @@ log = Logger("scrape-recipe")
     query=ScrapeQuery,
     body=TypeAdapter(ScrapeRecipeRequestBody | None),
 )
-@dump_response
 @validate_environment(model=Environment, log=log)
 @verify_user_quota(log)
 def handler(
