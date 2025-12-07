@@ -3,9 +3,9 @@ import itertools
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from aws_lambda_powertools.utilities.typing import LambdaContext
-from aws_lambda_powertools.utilities.parser import event_parser
 import boto3
 from botocore.exceptions import ClientError
+from pydantic import TypeAdapter
 from recipe_scrapers import scrape_html
 from recipe_scrapers._exceptions import RecipeScrapersExceptions
 from shared.models.DTO.ProcessIngredientsInput import (
@@ -20,9 +20,11 @@ from shared.models.authorization.CognitoUserClaims import CognitoUserClaims
 from shared.models.database.RecipeDbItem import RecipeDbItem
 from shared.models.database.ScrapedRecipe import ScrapedRecipe
 from shared.models.exceptions.apiExceptions import UnableToParseRecipeException
-from shared.models.lambda_events.ScrapeRecipeApiGatewayEvent import (
-    ScrapeRecipeApiGatewayEvent,
+from shared.models.requests.ScrapeRecipeRequestBody import (
+    ScrapeRecipeRequestBody,
 )
+from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
+from shared.models.requests.queries.ScrapeQuery import ScrapeQuery
 from shared.models.responses.HttpResponse import (
     InternalServerErrorResponse,
     OkResponse,
@@ -30,6 +32,7 @@ from shared.models.responses.HttpResponse import (
 )
 from shared.utils.environment import validate_environment
 from shared.utils.dump_response import dump_response
+from shared.utils.openapi import http_endpoint
 from shared.utils.verify_quota import verify_user_quota
 from .env import Environment
 from aws_lambda_powertools import Logger
@@ -38,20 +41,29 @@ log = Logger("scrape-recipe")
 
 
 @log.inject_lambda_context(log_event=True)
-@event_parser(model=ScrapeRecipeApiGatewayEvent)
+@http_endpoint(
+    log,
+    responses=[
+        OkResponse[str],
+        InternalServerErrorResponse,
+        UnprocessableEntityResponse,
+    ],
+    query=ScrapeQuery,
+    body=TypeAdapter(ScrapeRecipeRequestBody | None),
+)
 @dump_response
 @validate_environment(model=Environment, log=log)
 @verify_user_quota(log)
 def handler(
-    event: ScrapeRecipeApiGatewayEvent,
+    rawEvent: APIGatewayProxyEventV2Model,
     _: LambdaContext,
     *,
     env: Environment,
     jwtClaims: CognitoUserClaims,
+    query: ScrapeQuery,
+    body: ScrapeRecipeRequestBody | None,
 ):
     try:
-        query = event.queryStringParameters
-
         wild_mode = False
 
         html = urlopen(Request(query.url)).read().decode("utf-8")
@@ -107,12 +119,12 @@ def handler(
 
         notificationEndpointArn: str | None = None
 
-        if query.parseIngredients and event.body:
+        if query.parseIngredients and body is not None:
             snsClient = boto3.client("sns")
             # TODO: handle IOS - from useragent header or smth
             result = snsClient.create_platform_endpoint(
                 PlatformApplicationArn=env.platformApplicationARN.android,
-                Token=event.body.notificationToken,
+                Token=body.notificationToken,
             )
             notificationEndpointArn = result["EndpointArn"]
 
