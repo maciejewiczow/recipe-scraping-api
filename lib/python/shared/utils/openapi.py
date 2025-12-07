@@ -43,11 +43,11 @@ def handle_param(
                 return BadRequestResponse(body=f"{paramName} not allowed")
             case (None, dict() as d) if len(d) != 0:
                 return BadRequestResponse(body=f"{paramName} not allowed")
-            case (Type(), str()):
+            case (type(), str()):
                 return paramType.model_validate_json(value)
-            case (Type(), dict() as d) if len(d) == 0:
+            case (type(), dict() as d) if len(d) == 0:
                 return paramType.model_validate(None)
-            case (Type(), _):
+            case (type(), _):
                 return paramType.model_validate(value)
             case _:
                 return None
