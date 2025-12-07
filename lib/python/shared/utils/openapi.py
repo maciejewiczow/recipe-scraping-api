@@ -2,9 +2,15 @@ from dataclasses import dataclass
 import functools
 from typing import Any, Callable, Type
 from aws_lambda_powertools import Logger
+from openai import InternalServerError
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
-from shared.models.responses.HttpResponse import BadRequestResponse, HttpResponse
+from aws_lambda_powertools.utilities.parser import parse
+from shared.models.responses.HttpResponse import (
+    BadRequestResponse,
+    HttpResponse,
+    InternalServerErrorResponse,
+)
 
 openapi_meta_key_name = "_openapi"
 
@@ -59,13 +65,17 @@ def http_endpoint(
     path: RequestParamType = None,
 ):
     def wrapper(func: Callable):
+        if BadRequestResponse not in responses:
+            responses.append(BadRequestResponse)
+
+        if InternalServerErrorResponse not in responses:
+            responses.append(InternalServerErrorResponse)
+
         setattr(
             func,
             openapi_meta_key_name,
             OpenApiMetadata(
-                responses=[*responses, BadRequestResponse]
-                if BadRequestResponse not in responses
-                else responses,
+                responses=responses,
                 body=body,
                 queryParams=query,
                 pathParams=path,
@@ -73,7 +83,13 @@ def http_endpoint(
         )
 
         @functools.wraps(func)
-        def wrapped(event: APIGatewayProxyEventV2Model, *args, **kwargs):
+        def wrapped(raw_event: dict[str, Any], *args, **kwargs):
+            try:
+                event = parse(model=APIGatewayProxyEventV2Model, event=raw_event)
+            except ValidationError:
+                log.exception("Event validation error")
+                return InternalServerErrorResponse(body="Invalid lambda event")
+
             result = handle_param(body, event.body, "body", log)  # type: ignore
 
             if isinstance(result, HttpResponse):
