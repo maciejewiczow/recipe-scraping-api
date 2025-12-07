@@ -1,34 +1,22 @@
+from dataclasses import dataclass
 import functools
-from typing import Annotated, Any, Callable, Type
+from typing import Any, Callable, Type
 from aws_lambda_powertools import Logger
-from pydantic import BaseModel, PlainSerializer, TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 from shared.models.responses.HttpResponse import BadRequestResponse, HttpResponse
 
 openapi_meta_key_name = "_openapi"
 
-BaseModelSchemaSerializer = PlainSerializer(lambda t: t.model_json_schema())
-
-JsonSchemaSerializedModelType = (
-    Annotated[type[BaseModel], BaseModelSchemaSerializer]
-    | Annotated[
-        TypeAdapter[BaseModel | None], PlainSerializer(lambda t: t.json_schema())
-    ]
-)
-
-JsonSchemaSeralizedHttpResponse = Annotated[
-    type[HttpResponse], BaseModelSchemaSerializer
-]
-
-
-class OpenApiMetadata(BaseModel):
-    responses: list[JsonSchemaSeralizedHttpResponse]
-    body: JsonSchemaSerializedModelType | None
-    queryParams: JsonSchemaSerializedModelType | None
-    pathParams: JsonSchemaSerializedModelType | None
-
-
 RequestParamType = type[BaseModel] | TypeAdapter[BaseModel | None] | None
+
+
+@dataclass
+class OpenApiMetadata:
+    responses: list[type[HttpResponse]]
+    body: RequestParamType | None
+    queryParams: RequestParamType | None
+    pathParams: RequestParamType | None
 
 
 def handle_param(
