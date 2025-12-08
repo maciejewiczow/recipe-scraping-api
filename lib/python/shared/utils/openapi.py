@@ -31,29 +31,42 @@ def handle_param(
     paramName: str,
     log: Logger,
 ):
-    try:
-        match (paramType, value):
-            case (TypeAdapter(), str()):
-                return paramType.validate_json(value)
-            case (TypeAdapter(), dict() as d) if len(d) == 0:
-                return paramType.validate_python(None)
-            case (TypeAdapter(), _):
-                return paramType.validate_python(value)
-            case (None, None):
-                return BadRequestResponse(body=f"{paramName} not allowed")
-            case (None, dict() as d) if len(d) != 0:
-                return BadRequestResponse(body=f"{paramName} not allowed")
-            case (type(), str()):
-                return paramType.model_validate_json(value)
-            case (type(), dict() as d) if len(d) == 0:
-                return paramType.model_validate(None)
-            case (type(), _):
-                return paramType.model_validate(value)
-            case _:
-                return None
-    except ValidationError:
-        log.exception(f"Invalid {paramName}")
-        return BadRequestResponse(body=f"Invalid {paramName}")
+    with log.append_context_keys(paramName=paramName):
+        try:
+            match (paramType, value):
+                case (TypeAdapter(), str()):
+                    log.debug("Type adapter + string param")
+                    return paramType.validate_json(value)
+                case (TypeAdapter(), dict() as d) if len(d) == 0:
+                    log.debug("Type adapter + empty dict")
+                    return paramType.validate_python(None)
+                case (TypeAdapter(), _):
+                    log.debug("Type adapter + other")
+                    return paramType.validate_python(value)
+                case (type(), str()):
+                    log.debug("BaseModel + string param")
+                    return paramType.model_validate_json(value)
+                case (type(), dict() as d) if len(d) == 0:
+                    log.debug("BaseModel + empty dict")
+                    return paramType.model_validate(None)
+                case (type(), _):
+                    log.debug("BaseModel + other")
+                    return paramType.model_validate(value)
+                case (None, None):
+                    log.debug("None param + None value")
+                    return None
+                case (None, dict() as d) if len(d) != 0:
+                    log.debug("None param + Empty dict")
+                    return None
+                case (None, t) if t is not None:
+                    log.debug("None param + other not none")
+                    return BadRequestResponse(body=f"{paramName} not allowed")
+                case _:
+                    log.debug("Other")
+                    return None
+        except ValidationError:
+            log.exception(f"Invalid {paramName}")
+            return BadRequestResponse(body=f"Invalid {paramName}")
 
 
 def http_endpoint(
