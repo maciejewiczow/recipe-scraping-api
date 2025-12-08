@@ -61,7 +61,8 @@ def handler(
     env: Environment,
     jwtClaims: CognitoUserClaims,
     query: ScrapeQuery,
-    body: ScrapeRecipeRequestBody | None,
+    body: ScrapeRecipeRequestBody | None = None,
+    **kwargs,
 ):
     try:
         wild_mode = False
