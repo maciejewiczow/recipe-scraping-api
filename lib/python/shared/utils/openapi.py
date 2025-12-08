@@ -108,21 +108,24 @@ def http_endpoint(
             if isinstance(result, HttpResponse):
                 return result
 
-            kwargs["body"] = result
+            if result is not None:
+                kwargs["body"] = result
 
             result = handle_param(query, event.queryStringParameters, "query", log)
 
             if isinstance(result, HttpResponse):
                 return result
 
-            kwargs["query"] = result
+            if result is not None:
+                kwargs["query"] = result
 
             result = handle_param(path, event.pathParameters, "path", log)
 
             if isinstance(result, HttpResponse):
                 return result
 
-            kwargs["path"] = result
+            if result is not None:
+                kwargs["path"] = result
 
             return func(event, *args, **kwargs)
 
