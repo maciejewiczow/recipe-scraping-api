@@ -225,6 +225,7 @@ custom:
       after:package:compileEvents:
         - scripts/modify-log-groups-retention.js
         - scripts/generate-openapi.js
+      after:aws:deploy:deploy:uploadArtifacts:
         - scripts/upload-openapi-to-bucket.js
 
 stepFunctions:

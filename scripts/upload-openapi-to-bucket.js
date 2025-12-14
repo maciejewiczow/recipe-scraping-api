@@ -4,11 +4,12 @@ const provider = serverless.getProvider('aws');
 
 (async () => {
     try {
-        if (!serverless.service.custom?.openapi?.bucket?.name || serverless.service.custom?.openapi?.bucket?.key) {
+        if (!serverless.service.custom?.openapi?.bucket?.name || !serverless.service.custom?.openapi?.bucket?.key) {
             console.warn("Openapi bucket name or key not set, skipping upload")
             return;
         }
 
+        console.log("Uploading generated openapi definition to s3")
         const contents = fs.readFile('.serverless/openapi.json');
 
         const params = {
@@ -19,6 +20,7 @@ const provider = serverless.getProvider('aws');
         }
 
         await provider.request('S3', 'putObject', params);
+        console.log("Upload finished")
     } catch (e) {
         console.error('Failed to upload the openapi description to bucket', e)
         process.exit(1);
