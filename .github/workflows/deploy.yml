@@ -30,13 +30,13 @@ jobs:
         run: python scripts/install-serverless-plugins.py
       - name: UV sync
         run: uv sync
-      - name: Get user-pool remplate changes
+      - name: Get user-pool template changes
         id: changes_user_pool
         uses: step-security/changed-files@v46
         with:
           files: |
             infra/user-pool/serverless.yml
-      - name: Get permanent-resources remplate changes
+      - name: Get permanent-resources template changes
         id: changes_permanent_resources
         uses: step-security/changed-files@v46
         with:
