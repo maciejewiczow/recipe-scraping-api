@@ -4,37 +4,54 @@ import botocore
 import botocore.exceptions
 from shared.models.authorization.CognitoUserClaims import CognitoUserClaims
 from shared.models.database.RecipeDbItem import RecipeDbItem
-from shared.models.lambda_events.GetRecipeApiGatewayEvent import (
-    GetRecipeApiGatewayEvent,
-)
+from shared.models.database.ScrapedRecipe import ScrapedRecipe
 from aws_lambda_powertools import Logger
-from aws_lambda_powertools.utilities.parser import event_parser
-from shared.models.responses.HttpResponse import NotFoundResponse, OkResponse
+from shared.models.requests.paths.GetRecipePathParams import GetRecipePathParams
+from shared.models.responses.HttpResponse import (
+    NotFoundResponse,
+    OkResponse,
+)
+from shared.openapi.tags import RecipesTag
 from shared.utils.dump_response import dump_response
 from shared.utils.environment import validate_environment
+from shared.utils.openapi import openapi_endpoint
 from shared.utils.verify_quota import verify_user_quota
 from .env import Environment
+from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
+
 
 log = Logger("get-recipe")
 
 
 @log.inject_lambda_context(log_event=True)
-@event_parser(model=GetRecipeApiGatewayEvent)
-@validate_environment(Environment, log)
 @dump_response
 @verify_user_quota(log)
+@openapi_endpoint(
+    log,
+    responses=[
+        OkResponse[ScrapedRecipe],
+        NotFoundResponse,
+    ],
+    path=GetRecipePathParams,
+    operationId="getRecipe",
+    description="Get a processed recipe by id",
+    summary="Returns a processed recipe given it's id",
+    tags=[RecipesTag],
+)
+@validate_environment(Environment, log)
 def handler(
-    event: GetRecipeApiGatewayEvent,
+    rawEvent: APIGatewayProxyEventV2Model,
     _: LambdaContext,
     *,
     env: Environment,
     jwtClaims: CognitoUserClaims,
+    path: GetRecipePathParams,
 ):
     try:
         recipesTable = boto3.resource("dynamodb").Table(env.recipesTableName)
 
         rawRecipe = recipesTable.get_item(
-            Key={RecipeDbItem.get_primary_key_name(): event.pathParameters.recipeId},
+            Key={RecipeDbItem.get_primary_key_name(): path.recipeId},
             ReturnConsumedCapacity="NONE",
         )
 

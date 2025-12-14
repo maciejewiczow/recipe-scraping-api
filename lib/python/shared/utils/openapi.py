@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 import functools
-from typing import Any, Callable, Type
+from typing import Any, Callable
 from aws_lambda_powertools import Logger
-from openai import InternalServerError
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 from aws_lambda_powertools.utilities.parser import parse
@@ -17,15 +16,123 @@ openapi_meta_key_name = "_openapi"
 RequestParamType = type[BaseModel] | TypeAdapter[BaseModel | None] | None
 
 
+def _serialize_request_param(param: RequestParamType):
+    if isinstance(param, TypeAdapter):
+        return param.json_schema()
+
+    if param is None:
+        return None
+
+    if issubclass(param, BaseModel):
+        return param.model_json_schema()
+
+
+class Tag(BaseModel):
+    name: str
+    description: str | None = None
+
+    def __hash__(self):
+        return hash(self.name)
+
+
 @dataclass
 class OpenApiMetadata:
     responses: list[type[HttpResponse]]
     body: RequestParamType | None
     queryParams: RequestParamType | None
     pathParams: RequestParamType | None
+    operationId: str | None
+    description: str | None
+    summary: str | None
+    tags: list[Tag]
+
+    def to_dict(self):
+        return {
+            "responseNames": [
+                res.__name__.replace("[", "_").replace("]", "_")
+                for res in self.responses
+            ],
+            "body": _serialize_request_param(self.body),
+            "queryParams": _serialize_request_param(self.queryParams),
+            "pathParams": _serialize_request_param(self.pathParams),
+            "operationId": self.operationId,
+            "description": self.description,
+            "summary": self.summary,
+            "tags": [tag.name for tag in self.tags],
+        }
 
 
-def handle_param(
+def openapi_endpoint(
+    log: Logger,
+    *,
+    responses: list[type[HttpResponse]],
+    body: RequestParamType = None,
+    query: RequestParamType = None,
+    path: RequestParamType = None,
+    operationId: str | None = None,
+    description: str | None = None,
+    summary: str | None = None,
+    tags: list[Tag] = [],
+):
+    def wrapper(func: Callable):
+        if BadRequestResponse not in responses:
+            responses.append(BadRequestResponse)
+
+        if InternalServerErrorResponse not in responses:
+            responses.append(InternalServerErrorResponse)
+
+        setattr(
+            func,
+            openapi_meta_key_name,
+            OpenApiMetadata(
+                responses=responses,
+                body=body,
+                queryParams=query,
+                pathParams=path,
+                operationId=operationId,
+                description=description,
+                summary=summary,
+                tags=tags,
+            ),
+        )
+
+        @functools.wraps(func)
+        def wrapped(raw_event: dict[str, Any], *args, **kwargs):
+            try:
+                event = parse(model=APIGatewayProxyEventV2Model, event=raw_event)
+            except ValidationError:
+                log.exception("Event validation error")
+                return InternalServerErrorResponse(body="Invalid lambda event")
+
+            result = _handle_param(body, event.body, "body", log)  # type: ignore
+
+            if isinstance(result, HttpResponse):
+                return result
+
+            kwargs["body"] = result
+
+            result = _handle_param(query, event.queryStringParameters, "query", log)
+
+            if isinstance(result, HttpResponse):
+                return result
+
+            kwargs["query"] = result
+
+            result = _handle_param(path, event.pathParameters, "path", log)
+
+            if isinstance(result, HttpResponse):
+                return result
+
+            kwargs["path"] = result
+
+            return func(event, *args, **kwargs)
+
+        return wrapped
+
+    return wrapper
+
+
+def _handle_param(
     paramType: RequestParamType,
     value: dict[str, Any] | str | None,
     paramName: str,
@@ -67,65 +174,3 @@ def handle_param(
         except ValidationError:
             log.exception(f"Invalid {paramName}")
             return BadRequestResponse(body=f"Invalid {paramName}")
-
-
-def http_endpoint(
-    log: Logger,
-    *,
-    responses: list[type[HttpResponse]],
-    body: RequestParamType = None,
-    query: RequestParamType = None,
-    path: RequestParamType = None,
-):
-    def wrapper(func: Callable):
-        if BadRequestResponse not in responses:
-            responses.append(BadRequestResponse)
-
-        if InternalServerErrorResponse not in responses:
-            responses.append(InternalServerErrorResponse)
-
-        setattr(
-            func,
-            openapi_meta_key_name,
-            OpenApiMetadata(
-                responses=responses,
-                body=body,
-                queryParams=query,
-                pathParams=path,
-            ),
-        )
-
-        @functools.wraps(func)
-        def wrapped(raw_event: dict[str, Any], *args, **kwargs):
-            try:
-                event = parse(model=APIGatewayProxyEventV2Model, event=raw_event)
-            except ValidationError:
-                log.exception("Event validation error")
-                return InternalServerErrorResponse(body="Invalid lambda event")
-
-            result = handle_param(body, event.body, "body", log)  # type: ignore
-
-            if isinstance(result, HttpResponse):
-                return result
-
-            kwargs["body"] = result
-
-            result = handle_param(query, event.queryStringParameters, "query", log)
-
-            if isinstance(result, HttpResponse):
-                return result
-
-            kwargs["query"] = result
-
-            result = handle_param(path, event.pathParameters, "path", log)
-
-            if isinstance(result, HttpResponse):
-                return result
-
-            kwargs["path"] = result
-
-            return func(event, *args, **kwargs)
-
-        return wrapped
-
-    return wrapper

@@ -30,9 +30,10 @@ from shared.models.responses.HttpResponse import (
     OkResponse,
     UnprocessableEntityResponse,
 )
+from shared.openapi.tags import RecipesTag
 from shared.utils.environment import validate_environment
 from shared.utils.dump_response import dump_response
-from shared.utils.openapi import http_endpoint
+from shared.utils.openapi import openapi_endpoint
 from shared.utils.verify_quota import verify_user_quota
 from .env import Environment
 from aws_lambda_powertools import Logger
@@ -42,18 +43,21 @@ log = Logger("scrape-recipe")
 
 @log.inject_lambda_context(log_event=True)
 @dump_response
-@http_endpoint(
+@verify_user_quota(log)
+@openapi_endpoint(
     log,
     responses=[
         OkResponse[str],
-        InternalServerErrorResponse,
         UnprocessableEntityResponse,
     ],
     query=ScrapeQuery,
     body=TypeAdapter(ScrapeRecipeRequestBody | None),
+    summary="Starts the processing of the recipe under the provided url, optionally with AI ingredient parsing",
+    description="Start the recipe processing",
+    operationId="scrapeRecipe",
+    tags=[RecipesTag],
 )
 @validate_environment(model=Environment, log=log)
-@verify_user_quota(log)
 def handler(
     rawEvent: APIGatewayProxyEventV2Model,
     _: LambdaContext,

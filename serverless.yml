@@ -199,6 +199,16 @@ custom:
   pythonRequirements:
     useUv: true
     dockerizePip: non-linux
+
+  openapi:
+    bucket:
+      name: ${param:openapiBucketName}
+      key: openapi-${self:service}-$self:provider.stage}.json
+    info:
+      title: Recipe importer
+      version: v1
+      description: An api allowing to scrape a recipe from the web and convert it into a json document
+
   customDomain:
     domainName: ${param:domainName}
     stage: prod
@@ -214,6 +224,9 @@ custom:
     hooks:
       after:package:compileEvents:
         - scripts/modify-log-groups-retention.js
+        - scripts/generate-openapi.js
+        - scripts/upload-openapi-to-bucket.js
+
 stepFunctions:
   stateMachines:
     processIngredients:

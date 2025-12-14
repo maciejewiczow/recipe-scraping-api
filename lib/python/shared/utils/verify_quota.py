@@ -20,6 +20,7 @@ from aws_lambda_powertools.utilities.parser.models import (
     APIGatewayProxyEventV2Model,
 )
 from boto3.dynamodb.conditions import Key
+from .openapi import OpenApiMetadata, openapi_meta_key_name
 
 
 class InvalidClaimsError(Exception):
@@ -41,6 +42,15 @@ def get_cognito_claims(event: APIGatewayProxyEventV2Model) -> CognitoUserClaims:
 
 def verify_user_quota(log: Logger):
     def decorator(func):
+        openapi_def: OpenApiMetadata | None = getattr(func, openapi_meta_key_name, None)
+
+        if openapi_def is not None:
+            if TooManyRequestsResponse not in openapi_def.responses:
+                openapi_def.responses.append(TooManyRequestsResponse)
+
+            if ForbiddenResponse not in openapi_def.responses:
+                openapi_def.responses.append(ForbiddenResponse)
+
         @functools.wraps(func)
         def wrapper(event: APIGatewayProxyEventV2Model, *args, **kwargs):
             try:
