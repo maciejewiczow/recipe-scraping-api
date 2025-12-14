@@ -1,6 +1,7 @@
 org: maciejcorp
 app: recipe-scraper
 service: recipe-scraper
+frameworkVersion: ^4.27.1
 
 provider:
   name: aws
@@ -183,12 +184,14 @@ functions:
 
 # used within processIngredients state machine definition file
 custom:
-  parseIngredientStartFnName: !Ref ParseDashingredientDashstartLambdaFunction
-  parseIngredientFailFnName: !Ref ParseDashingredientDashfailLambdaFunction
-  parseIngredientSuccessFnName: !Ref ParseDashingredientDashsuccessLambdaFunction
-  assembleRecipeFnName: !Ref AssembleDashrecipeLambdaFunction
-  parseIngredientFailNotificationSNSTopic: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationsTopic
-  prepareForRetryFunctionArn: !Ref ParseDashingrDashprepDashretryLambdaFunction
+  step-functions:
+    process-ingredients:
+      parseIngredientStartFnName: !Ref ParseDashingredientDashstartLambdaFunction
+      parseIngredientFailFnName: !Ref ParseDashingredientDashfailLambdaFunction
+      parseIngredientSuccessFnName: !Ref ParseDashingredientDashsuccessLambdaFunction
+      assembleRecipeFnName: !Ref AssembleDashrecipeLambdaFunction
+      parseIngredientFailNotificationSNSTopic: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationsTopic
+      prepareForRetryFunctionArn: !Ref ParseDashingrDashprepDashretryLambdaFunction
 
   pythonRequirements:
     useUv: true

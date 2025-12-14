@@ -11,7 +11,7 @@ States:
           Type: Task
           Resource: arn:aws:states:::lambda:invoke.waitForTaskToken
           Parameters:
-            FunctionName: ${self:custom.parseIngredientStartFnName}
+            FunctionName: ${self:custom.step-functions.process-ingredients.parseIngredientStartFnName}
             Payload:
               taskToken.$: $$.Task.Token
               ingredient.$: $
@@ -50,7 +50,7 @@ States:
           OutputPath: $.Payload
           Parameters:
             Payload.$: $
-            FunctionName: ${self:custom.parseIngredientSuccessFnName}
+            FunctionName: ${self:custom.step-functions.process-ingredients.parseIngredientSuccessFnName}
           Retry:
             - ErrorEquals:
                 - Lambda.ServiceException
@@ -74,7 +74,7 @@ States:
           OutputPath: $.Payload
           Parameters:
             Payload.$: $
-            FunctionName: ${self:custom.prepareForRetryFunctionArn}
+            FunctionName: ${self:custom.step-functions.process-ingredients.prepareForRetryFunctionArn}
           Retry:
             - ErrorEquals:
                 - Lambda.ServiceException
@@ -92,7 +92,7 @@ States:
           OutputPath: $.Payload
           Parameters:
             Payload.$: $
-            FunctionName: ${self:custom.parseIngredientFailFnName}
+            FunctionName: ${self:custom.step-functions.process-ingredients.parseIngredientFailFnName}
           Retry:
             - ErrorEquals:
                 - Lambda.ServiceException
@@ -108,9 +108,8 @@ States:
           Type: Task
           Resource: arn:aws:states:::sns:publish
           Parameters:
-            TopicArn: ${self:custom.parseIngredientFailNotificationSNSTopic}
-            Message.$: States.Format('Ran out of AI credits while parsing recipe {}. Go top
-              it up, white boy.', $.recipeId)
+            TopicArn: ${self:custom.step-functions.process-ingredients.parseIngredientFailNotificationSNSTopic}
+            Message.$: States.Format('Ran out of AI credits while parsing recipe {}. Go top it up, white boy.', $.recipeId)
             Subject: Recipe parser ran out of money
             MessageDeduplicationId.$: $.recipeId
           End: true
@@ -119,7 +118,7 @@ States:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
     Parameters:
-      FunctionName: ${self:custom.assembleRecipeFnName}
+      FunctionName: ${self:custom.step-functions.process-ingredients.assembleRecipeFnName}
       Payload:
         results.$: $
     End: true
