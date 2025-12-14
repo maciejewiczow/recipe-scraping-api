@@ -279,3 +279,4 @@ resources:
 plugins:
   - serverless-step-functions
   - serverless-domain-manager
+  - serverless-scriptable-plugin

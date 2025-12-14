@@ -6,6 +6,7 @@ provider:
 org: maciejcorp
 app: recipe-scraper
 service: recie-scrapers-user-pool
+frameworkVersion: ^4.27.1
 
 resources:
   Description: CloudFormation stack for recipe scraper prod - user pool related resources

@@ -6,6 +6,7 @@ provider:
 org: maciejcorp
 app: recipe-scraper
 service: recie-scrapers-premanent-resources
+frameworkVersion: ^4.27.1
 
 resources:
   Description: "CloudFormation template for recipe-scraper prod - permanent resources"
