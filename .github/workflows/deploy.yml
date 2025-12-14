@@ -73,7 +73,10 @@ jobs:
             --param "promptIdEN=${{ vars.AI_PARSING_PROMPT_ID_EN }}" \
             --param "maxAiParseRetryCount=${{ vars.MAX_AI_PARSE_RETRY_COUNT }}" \
             --param "domainName=${{ vars.DOMAIN_NAME }}" \
-            --param "aiModelName=${{ vars.AI_MODEL_NAME }}" --verbose 2>&1 | tee --output-error=warn deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter";
+            --param "openapiBucketName=${{ vars.OPENAPI_BUCKET_NAME }}" \
+            --param "aiModelName=${{ vars.AI_MODEL_NAME }}" \
+            --verbose \
+            2>&1 | tee --output-error=warn deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter";
 
           deploy_exit=$?;
 
