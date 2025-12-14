@@ -193,6 +193,9 @@ custom:
       parseIngredientFailNotificationSNSTopic: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationsTopic
       prepareForRetryFunctionArn: !Ref ParseDashingrDashprepDashretryLambdaFunction
 
+  logging:
+    logGroupsRetentionInDays: 60
+
   pythonRequirements:
     useUv: true
     dockerizePip: non-linux
@@ -207,6 +210,10 @@ custom:
     autoDomain: true
     certificateArn: ${env:DOMAIN_CERTIFICATE_ARN}
 
+  scriptable:
+    hooks:
+      after:package:compileEvents:
+        - scripts/modify-log-groups-retention.js
 stepFunctions:
   stateMachines:
     processIngredients:
