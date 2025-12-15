@@ -10,7 +10,7 @@ const provider = serverless.getProvider('aws');
         }
 
         console.log("Uploading generated openapi definition to s3")
-        const contents = fs.readFile('.serverless/openapi.json');
+        const contents = await fs.readFile('.serverless/openapi.json');
 
         const params = {
             Bucket: serverless.service.custom.openapi.bucket.name,

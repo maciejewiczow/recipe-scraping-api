@@ -203,7 +203,7 @@ custom:
   openapi:
     bucket:
       name: ${param:openapiBucketName}
-      key: openapi-${self:service}-$self:provider.stage}.json
+      key: openapi-${self:service}-${self:provider.stage}.json
     info:
       title: Recipe importer
       version: v1
