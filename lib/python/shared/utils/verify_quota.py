@@ -1,5 +1,6 @@
 from decimal import Decimal
 import functools
+from typing import Any
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
@@ -20,6 +21,7 @@ from aws_lambda_powertools.utilities.parser.models import (
     APIGatewayProxyEventV2Model,
 )
 from boto3.dynamodb.conditions import Key
+from aws_lambda_powertools.utilities.parser import parse
 from .openapi import OpenApiMetadata, openapi_meta_key_name
 
 
@@ -52,7 +54,13 @@ def verify_user_quota(log: Logger):
                 openapi_def.responses.append(ForbiddenResponse)
 
         @functools.wraps(func)
-        def wrapper(event: APIGatewayProxyEventV2Model, *args, **kwargs):
+        def wrapper(raw_event: dict[str, Any], *args, **kwargs):
+            try:
+                event = parse(model=APIGatewayProxyEventV2Model, event=raw_event)
+            except ValidationError:
+                log.exception("Event validation error")
+                return InternalServerErrorResponse(body="Invalid lambda event")
+
             try:
                 env = QuotaBaseEnv()
 
