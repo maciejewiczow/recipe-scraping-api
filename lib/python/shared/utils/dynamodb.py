@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Annotated, Literal, get_type_hints
+from types import UnionType
+from typing import Annotated, Literal, Type, get_args, get_type_hints
 import botocore
 import botocore.exceptions
 from pydantic import (
@@ -27,6 +28,13 @@ def metadata_has_primary_key_with_type(metadata: list, key_type: KeyType) -> boo
     return primaryKeyMetadata is not None and primaryKeyMetadata.key_type == key_type
 
 
+def is_base_model_subclass_unions(type: Type | UnionType):
+    if not isinstance(type, UnionType):
+        return issubclass(type, BaseModel)
+
+    return any(issubclass(arg, BaseModel) for arg in get_args(type))
+
+
 class DynamodbModel(BaseModel):
     @classmethod
     def from_dynamo(cls, data: dict):
@@ -39,7 +47,8 @@ class DynamodbModel(BaseModel):
         return ",".join(
             field_name
             for field_name, field_info in cls.model_fields.items()
-            if not field_info.exclude and not issubclass(types[field_name], BaseModel)
+            if not field_info.exclude
+            and not is_base_model_subclass_unions(types[field_name])
         )
 
     @classmethod
