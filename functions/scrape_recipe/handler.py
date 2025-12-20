@@ -88,7 +88,11 @@ def handler(
             IngredientGroup(
                 name=ig.get("purpose", None),
                 ingredients=[
-                    Ingredient(name=name, isProcessed=not query.parseIngredients)
+                    Ingredient(
+                        name=name,
+                        originalText=name,
+                        isProcessed=not query.parseIngredients,
+                    )
                     for name in ig.get("ingredients", [])
                 ],
             )

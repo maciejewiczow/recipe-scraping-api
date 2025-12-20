@@ -44,6 +44,7 @@ def handler(
             result=[
                 Ingredient(
                     name=event.content,
+                    originalText=event.content,
                     isProcessed=True,
                 )
             ],

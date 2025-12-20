@@ -72,7 +72,11 @@ def handler(
                 originalIngredient=storedResponse.OriginalIngredientInput,
                 result=[
                     Ingredient(
-                        name=i.name, unit=i.unit, quantity=i.quantity, isProcessed=True
+                        name=i.name,
+                        originalText=i.name,
+                        unit=i.unit,
+                        quantity=i.quantity,
+                        isProcessed=True,
                     )
                     for i in ingredients.ingredients
                 ],
@@ -94,6 +98,7 @@ def handler(
                 result=[
                     Ingredient(
                         name=storedResponse.OriginalIngredientInput.content,
+                        originalText=storedResponse.OriginalIngredientInput.content,
                         unit=None,
                         quantity=None,
                         isProcessed=True,

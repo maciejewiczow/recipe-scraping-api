@@ -8,6 +8,7 @@ class Ingredient(BaseModel):
     unit: str | None = None
     quantity: str | None = None
     preparationNotes: str | None = None
+    originalText: str
     isProcessed: bool
 
     def __eq__(self, value: object) -> bool:
