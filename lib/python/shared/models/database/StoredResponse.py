@@ -10,12 +10,12 @@ from shared.utils.dynamodb import DynamodbModel, PrimaryKey, TTLField
 class StoredResponse(DynamodbModel):
     ResponseId: Annotated[str, PrimaryKey(key_type="hash")]
     TaskToken: str
-    ExpiresIn: TTLField
+    ExpiresAt: TTLField
     OriginalIngredientInput: IngredientToProcessWithLangInfoDTO
     RetryCount: int
 
 
 class StoredResponseProjection(StoredResponse):
-    ExpiresIn: TTLField = Field(exclude=True)
+    ExpiresAt: TTLField = Field(exclude=True)
     OriginalIngredientInput: IngredientToProcessWithLangInfoDTO = Field(exclude=True)
     RetryCount: int = Field(exclude=True)

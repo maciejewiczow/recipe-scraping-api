@@ -87,6 +87,9 @@ resources:
         KeySchema:
           - AttributeName: ResponseId
             KeyType: HASH
+        TimeToLiveSpecification:
+          AttributeName: ExpiresAt
+          Enabled: true
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
 
