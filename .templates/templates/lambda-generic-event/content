@@ -1,0 +1,20 @@
+from aws_lambda_powertools import Logger
+from aws_lambda_powertools.utilities.typing import LambdaContext
+from aws_lambda_powertools.utilities.parser import event_parser
+from shared.utils.dump_response import dump_response
+from shared.utils.environment import validate_environment
+<% if (groupTemplates?.length ?? 0 > 1) { %>from .env import Environment<% } %>
+
+log = Logger("<%= relativeFilePath.split(/\\|\//).at(-2) %>")
+
+
+@log.inject_lambda_context(log_event=True)
+@event_parser(
+    model=,
+)
+<% if (groupTemplates?.length ?? 0 > 1) { %>@validate_environment(model=Environment, log=log)<% } %>
+@dump_response
+def handler(
+    event: , context: LambdaContext,<% if (groupTemplates?.length ?? 0 > 1) { %> *, env: Environment,<% } %>
+):
+    pass

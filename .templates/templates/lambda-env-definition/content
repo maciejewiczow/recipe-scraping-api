@@ -1,0 +1,5 @@
+from shared.models.environment.settings import BaseEnvironment
+
+
+class Environment(BaseEnvironment):
+    pass

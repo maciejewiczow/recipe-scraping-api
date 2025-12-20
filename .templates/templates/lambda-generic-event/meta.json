@@ -1,5 +1,5 @@
 {
-  "name": "Lambda http endpoint python",
+  "name": "Lambda generic event",
   "fileTemplateName": "handler.py",
   "onlyAsPartOfGroup": false,
   "disabled": false

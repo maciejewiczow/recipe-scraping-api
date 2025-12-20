@@ -1,0 +1,6 @@
+{
+  "name": "Lambda env definition",
+  "fileTemplateName": "env.py",
+  "onlyAsPartOfGroup": false,
+  "disabled": false
+}

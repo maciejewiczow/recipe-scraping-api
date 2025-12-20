@@ -1,0 +1,9 @@
+{
+  "name": "HTTP event lambda with env",
+  "templates": [
+    "lambda-env-definition",
+    "lambda-python"
+  ],
+  "templatesUseSameVariables": true,
+  "disabled": false
+}

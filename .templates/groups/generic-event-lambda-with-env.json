@@ -1,0 +1,9 @@
+{
+  "name": "Generic event lambda with env",
+  "templates": [
+    "lambda-env-definition",
+    "lambda-generic-event"
+  ],
+  "templatesUseSameVariables": true,
+  "disabled": false
+}
