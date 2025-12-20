@@ -2,9 +2,9 @@ from pydantic import TypeAdapter
 from shared.models.DTO.ProcessIngredientsInput import (
     ProcessIngredientsInput,
 )
-from shared.models.DTO.ProcessedIngredient import ProcessIngredientsMapResult
+from shared.models.DTO.ProcessedIngredient import ProcessedIngredientCollectionList
 
 
-FailHandlerEvent = ProcessIngredientsMapResult | ProcessIngredientsInput
+FailHandlerEvent = ProcessedIngredientCollectionList | ProcessIngredientsInput
 
 FailHandlerEventTypeAdapter = TypeAdapter(FailHandlerEvent)

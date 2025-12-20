@@ -10,5 +10,8 @@ class ProcessedIngredientCollection(BaseModel):
     result: list[Ingredient]
 
 
+ProcessedIngredientCollectionList = list[ProcessedIngredientCollection]
+
+
 class ProcessIngredientsMapResult(BaseModel):
-    results: list[ProcessedIngredientCollection]
+    results: ProcessedIngredientCollectionList

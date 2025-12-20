@@ -5,6 +5,7 @@ import boto3
 import botocore
 import botocore.exceptions
 from pydantic import ValidationError
+from shared.models.DTO.ProcessIngredientsInput import IngredientToProcessWithLangInfoDTO
 from shared.models.database.RecipeDbItem import RecipeDbItemProjection
 from shared.models.lambda_events.FailHandlerEvent import (
     FailHandlerEventTypeAdapter,
@@ -38,10 +39,12 @@ def handler(
     env: Environment,
 ):
     try:
+        firstItem = event[0]
+
         recipeId = (
-            event[0].recipeId
-            if isinstance(event, list)
-            else event.results[0].originalIngredient.recipeId
+            firstItem.recipeId
+            if isinstance(firstItem, IngredientToProcessWithLangInfoDTO)
+            else firstItem.originalIngredient.recipeId
         )
 
         recipesTable = boto3.resource("dynamodb").Table(env.recipesTableName)
