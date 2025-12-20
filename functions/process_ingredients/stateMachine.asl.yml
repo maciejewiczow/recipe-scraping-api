@@ -148,7 +148,7 @@ States:
     OutputPath: $.Payload
     Parameters:
       Payload.$: $
-      FunctionName: ${self:custom.step-functions.process-ingredient.sendFailNotificationFunctionArn}
+      FunctionName: ${self:custom.step-functions.process-ingredients.sendFailNotificationFunctionArn}
     Retry:
       - ErrorEquals:
           - Lambda.ServiceException
