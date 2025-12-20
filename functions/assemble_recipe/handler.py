@@ -38,6 +38,8 @@ def handler(
 ):
     recipesTable = boto3.resource("dynamodb").Table(env.recipesTableName)
 
+    raise Exception("Test")
+
     try:
         recipeId = event.results[0].originalIngredient.recipeId
 
