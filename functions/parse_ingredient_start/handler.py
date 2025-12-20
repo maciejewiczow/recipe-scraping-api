@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from aws_lambda_powertools import Logger
 import boto3
 from openai import BadRequestError, OpenAI, RateLimitError
@@ -67,6 +68,7 @@ def handler(event: ParseIngredientInput, context: LambdaContext, *, env: Environ
                 TaskToken=event.taskToken,
                 OriginalIngredientInput=event.ingredient,
                 RetryCount=event.ingredient.retryCount,
+                ExpiresAt=datetime.now() + timedelta(days=1),
             ).model_dump(),
             ReturnValues="NONE",
         )

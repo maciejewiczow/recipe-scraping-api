@@ -1,21 +1,16 @@
 from typing import Annotated
-
-from pydantic import Field
 from shared.models.DTO.ProcessIngredientsInput import (
     IngredientToProcessWithLangInfoDTO,
 )
 from shared.utils.dynamodb import DynamodbModel, PrimaryKey, TTLField
 
 
-class StoredResponse(DynamodbModel):
+class StoredResponseProjection(DynamodbModel):
     ResponseId: Annotated[str, PrimaryKey(key_type="hash")]
     TaskToken: str
+
+
+class StoredResponse(StoredResponseProjection):
     ExpiresAt: TTLField
     OriginalIngredientInput: IngredientToProcessWithLangInfoDTO
     RetryCount: int
-
-
-class StoredResponseProjection(StoredResponse):
-    ExpiresAt: TTLField = Field(exclude=True)
-    OriginalIngredientInput: IngredientToProcessWithLangInfoDTO = Field(exclude=True)
-    RetryCount: int = Field(exclude=True)
