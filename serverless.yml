@@ -182,6 +182,26 @@ functions:
               - dynamodb:GetItem
             Resource: !ImportValue RecipeScraperPermanentResourcesProd-OpenAiResponsesTableArn
 
+  send-failed-notification:
+    handler: functions/send_failed_notification/handler.handler
+    environment:
+      RECIPES_TABLE_NAME: !ImportValue RecipeScraperPermanentResourcesProd-RecipesTableName
+      FAIL_NOTIFICATION__BODY: ${param:recipeParsingFailedNotificationBody}
+      FAIL_NOTIFICATION__TITLE: ${param:recipeParsingFailedNotificationTitle}
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:UpdateItem
+            Resource: !ImportValue RecipeScraperPermanentResourcesProd-RecipesTableArn
+          - Effect: Allow
+            Action:
+              - sns:Publish
+              - sns:DeleteEndpoint
+            Resource: ${env:SNS_ANDROID_PLATFORM_APPLICATION_ARN}
 # used within processIngredients state machine definition file
 custom:
   step-functions:
@@ -192,6 +212,7 @@ custom:
       assembleRecipeFnName: !Ref AssembleDashrecipeLambdaFunction
       parseIngredientFailNotificationSNSTopic: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationsTopic
       prepareForRetryFunctionArn: !Ref ParseDashingrDashprepDashretryLambdaFunction
+      sendFailNotificationFunctionArn: !Ref SendDashfailedDashnotificationLambdaFunction
 
   logging:
     logGroupsRetentionInDays: 60

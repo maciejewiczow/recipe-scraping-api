@@ -131,6 +131,7 @@ def handler(
                     )
 
         recipeItem.IsComplete = True
+        recipeItem.HasParsingSucceeded = True
 
         if recipeItem.NotificationEndpointARN is not None:
             snsClient = boto3.client("sns")

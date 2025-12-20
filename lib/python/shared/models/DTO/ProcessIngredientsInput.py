@@ -16,4 +16,8 @@ class IngredientToProcessWithLangInfoDTO(IngredientToProcessDTO):
     retryCount: int = 0
 
 
-ProcessIngredientsInput = TypeAdapter(list[IngredientToProcessWithLangInfoDTO])
+ProcessIngredientsInput = list[IngredientToProcessWithLangInfoDTO]
+
+ProcessIngredientsInputTypeAdapter = TypeAdapter(
+    list[IngredientToProcessWithLangInfoDTO]
+)

@@ -8,6 +8,7 @@ from shared.models.database.ScrapedRecipe import ScrapedRecipe
 from aws_lambda_powertools import Logger
 from shared.models.requests.paths.GetRecipePathParams import GetRecipePathParams
 from shared.models.responses.HttpResponse import (
+    MultiStatusResponse,
     NotFoundResponse,
     OkResponse,
 )
@@ -30,6 +31,7 @@ log = Logger("get-recipe")
     log,
     responses=[
         OkResponse[ScrapedRecipe],
+        MultiStatusResponse[str],
         NotFoundResponse,
     ],
     path=GetRecipePathParams,
@@ -60,6 +62,9 @@ def handler(
 
         if not recipeRow.IsComplete or recipeRow.OwnerId != jwtClaims.userId:
             return NotFoundResponse()
+
+        if not recipeRow.HasParsingSucceeded:
+            return MultiStatusResponse(body="Parsing failed, please try again")
 
         return OkResponse(body=recipeRow.Content)
     except botocore.exceptions.ClientError as e:

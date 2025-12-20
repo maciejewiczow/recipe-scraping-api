@@ -109,11 +109,18 @@ States:
           Resource: arn:aws:states:::sns:publish
           Parameters:
             TopicArn: ${self:custom.step-functions.process-ingredients.parseIngredientFailNotificationSNSTopic}
-            Message.$: States.Format('Ran out of AI credits while parsing recipe {}. Go top it up, white boy.', $.recipeId)
+            Message.$: States.Format('Ran out of AI credits while parsing recipe {}. Go top
+              it up, white boy.', $.recipeId)
             Subject: Recipe parser ran out of money
             MessageDeduplicationId.$: $.recipeId
           End: true
     Next: AssembleRecipe
+    Catch:
+      - ErrorEquals:
+          - States.ALL
+        Comment: Map failed
+        Next: Send fail notification
+        ResultPath: null
   AssembleRecipe:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
@@ -121,7 +128,6 @@ States:
       FunctionName: ${self:custom.step-functions.process-ingredients.assembleRecipeFnName}
       Payload:
         results.$: $
-    End: true
     Retry:
       - ErrorEquals:
           - ClientError
@@ -129,3 +135,28 @@ States:
         IntervalSeconds: 1
         MaxAttempts: 3
         Comment: Dynamo error
+    Catch:
+      - ErrorEquals:
+          - States.ALL
+        Next: Send fail notification
+        ResultPath: null
+        Comment: Assemble failed
+    End: true
+  Send fail notification:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload
+    Parameters:
+      Payload.$: $
+      FunctionName: ${self:custom.step-functions.process-ingredient.sendFailNotificationFunctionArn}
+    Retry:
+      - ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          - Lambda.TooManyRequestsException
+        IntervalSeconds: 1
+        MaxAttempts: 3
+        BackoffRate: 2
+        JitterStrategy: FULL
+    End: true

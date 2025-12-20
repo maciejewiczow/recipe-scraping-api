@@ -66,5 +66,9 @@ class OkResponse[T: BaseModel | str](HttpResponse):
         self._headers = value
 
 
+class MultiStatusResponse[T: BaseModel | str](OkResponse[T]):
+    statusCode: Literal[207] = Field(207, init=False, frozen=True)
+
+
 class EmptyOkResponse(OkResponse):
     body: str = Field("", init=False, frozen=True)

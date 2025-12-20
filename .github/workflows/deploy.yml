@@ -75,6 +75,8 @@ jobs:
             --param "domainName=${{ vars.DOMAIN_NAME }}" \
             --param "openapiBucketName=${{ vars.OPENAPI_BUCKET_NAME }}" \
             --param "aiModelName=${{ vars.AI_MODEL_NAME }}" \
+            --param "recipeParsingFailedNotificationTitle=${{ vars.RECIPE_FAILED_NOTIFICATION_TITLE }}" \
+            --param "recipeParsingFailedNotificationBody=${{ vars.RECIPE_FAILED_NOTIFICATION_BODY }}" \
             --verbose \
             2>&1 | tee --output-error=warn deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter";
 

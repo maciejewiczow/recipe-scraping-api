@@ -10,7 +10,7 @@ from recipe_scrapers import scrape_html
 from recipe_scrapers._exceptions import RecipeScrapersExceptions
 from shared.models.DTO.ProcessIngredientsInput import (
     IngredientToProcessWithLangInfoDTO,
-    ProcessIngredientsInput,
+    ProcessIngredientsInputTypeAdapter,
 )
 from shared.models.IngredientParseStatus import IngredientParseStatus
 from shared.models.Ingredient import Ingredient
@@ -142,6 +142,7 @@ def handler(
                 RecipeId=recipe.id,
                 Content=recipeContent,
                 IsComplete=not query.parseIngredients,
+                HasParsingSucceeded=None if query.parseIngredients else True,
                 ExpiresAt=recipeExpiresAt,
                 NotificationEndpointARN=notificationEndpointArn,
                 OwnerId=jwtClaims.userId,
@@ -154,7 +155,7 @@ def handler(
 
             stepFnClient.start_execution(
                 stateMachineArn=env.processIngredientStepFnArn,
-                input=ProcessIngredientsInput.dump_json(
+                input=ProcessIngredientsInputTypeAdapter.dump_json(
                     [
                         IngredientToProcessWithLangInfoDTO(
                             content=ingredient.name,
