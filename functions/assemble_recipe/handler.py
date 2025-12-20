@@ -75,7 +75,7 @@ def handler(
             originalIngredient.quantity = firstParsedIngredient.quantity
             originalIngredient.unit = firstParsedIngredient.unit
             originalIngredient.preparationNotes = firstParsedIngredient.preparationNotes
-            originalIngredient.originalText = firstParsedIngredient.originalText
+            originalIngredient.originalText = parseResult.originalIngredient.content
 
             recipeItem.Content.ingredientStatuses[
                 parseResult.originalIngredient.ingredientId
@@ -113,6 +113,10 @@ def handler(
                             "ingredients": group.ingredients,
                         },
                     )
+                    parsedIngredient.originalText = (
+                        parseResult.originalIngredient.content
+                    )
+
                     group.ingredients.insert(
                         firstParsedIngredientIndex + 1, parsedIngredient
                     )
