@@ -1,9 +1,11 @@
 from dataclasses import dataclass
-from typing import Literal, get_type_hints
+from datetime import datetime
+from typing import Annotated, Literal, get_type_hints
 import botocore
 import botocore.exceptions
 from pydantic import (
     BaseModel,
+    PlainSerializer,
 )
 from shared.utils.find import find
 
@@ -62,3 +64,6 @@ def is_not_found_exception(e: botocore.exceptions.ClientError) -> bool:
 
 class DynamoDBItemNotFoundException(Exception):
     pass
+
+
+TTLField = Annotated[datetime, PlainSerializer(lambda x: int(x.timestamp()))]

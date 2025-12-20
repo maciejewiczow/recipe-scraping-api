@@ -1,7 +1,6 @@
 from typing import Annotated
-from shared.models.database.SerializableDatetime import SerializableDatetime
 from shared.models.database.ScrapedRecipe import ScrapedRecipe
-from shared.utils.dynamodb import DynamodbModel, PrimaryKey
+from shared.utils.dynamodb import DynamodbModel, PrimaryKey, TTLField
 
 
 class RecipeDbItem(DynamodbModel):
@@ -9,5 +8,5 @@ class RecipeDbItem(DynamodbModel):
     Content: ScrapedRecipe
     IsComplete: bool
     OwnerId: str
-    ExpiresAt: SerializableDatetime
+    ExpiresAt: TTLField
     NotificationEndpointARN: str | None
