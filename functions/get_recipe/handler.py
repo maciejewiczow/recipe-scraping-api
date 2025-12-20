@@ -46,6 +46,7 @@ def handler(
     env: Environment,
     jwtClaims: CognitoUserClaims,
     path: GetRecipePathParams,
+    **kwargs,
 ):
     try:
         recipesTable = boto3.resource("dynamodb").Table(env.recipesTableName)
