@@ -78,9 +78,9 @@ jobs:
             --param "recipeParsingFailedNotificationTitle=${{ vars.RECIPE_FAILED_NOTIFICATION_TITLE }}" \
             --param "recipeParsingFailedNotificationBody=${{ vars.RECIPE_FAILED_NOTIFICATION_BODY }}" \
             --verbose \
-            2>&1 | tee deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter";
+            2>&1 | tee deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter" | true;
 
-          deploy_exit=$?;
+          deploy_exit=PIPESTATUS[2];
 
           cat deploy.log;
 
