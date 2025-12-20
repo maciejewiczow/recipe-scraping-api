@@ -80,7 +80,7 @@ jobs:
             --verbose \
             2>&1 | tee deploy.log | grep -qs "Could not resolve provider.httpApi.id parameter" | true;
 
-          deploy_exit=$PIPESTATUS[2];
+          deploy_exit=${PIPESTATUS[2]};
 
           cat deploy.log;
 
