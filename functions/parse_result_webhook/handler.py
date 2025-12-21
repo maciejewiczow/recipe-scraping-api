@@ -55,8 +55,7 @@ def handler(event: WebhookApiGatewayEvent, context: LambdaContext, *, env: Envir
 
         sfnClient = boto3.client("stepfunctions")
 
-        # if openaiEvent.type in ["response.failed", "response.cancelled"]:
-        if True:
+        if openaiEvent.type in ["response.failed", "response.cancelled"]:
             log.error(
                 "Openai response failed or cancelled",
                 extra={"openAiEvent": openaiEvent},
