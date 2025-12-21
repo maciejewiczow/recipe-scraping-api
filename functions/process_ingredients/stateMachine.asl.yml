@@ -35,7 +35,7 @@ States:
                 - ResponseFailed
               BackoffRate: 2
               IntervalSeconds: 4
-              MaxAttempts: ${param:maxAiParseRetryCount}
+              MaxAttempts: 5
               Comment: OpenAI Response failed
               JitterStrategy: FULL
           Catch:
