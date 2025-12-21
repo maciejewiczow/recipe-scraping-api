@@ -37,6 +37,8 @@ def handler(event: ParseIngredientInput, context: LambdaContext, *, env: Environ
 
     _, Ingredients = create_chat_models(lang)
 
+    raise Exception("Test")
+
     try:
         response = client.responses.create(
             prompt={
