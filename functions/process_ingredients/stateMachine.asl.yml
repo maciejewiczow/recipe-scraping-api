@@ -31,6 +31,13 @@ States:
               MaxAttempts: 10
               Comment: OpenAI rate limit hit
               IntervalSeconds: 2
+            - ErrorEquals:
+                - ResponseFailed
+              BackoffRate: 2
+              IntervalSeconds: 4
+              MaxAttempts: ${param:maxAiParseRetryCount}
+              Comment: OpenAI Response failed
+              JitterStrategy: FULL
           Catch:
             - ErrorEquals:
                 - OutOfCreditsException
@@ -39,8 +46,7 @@ States:
               Comment: Out of credits
             - ErrorEquals:
                 - InputTooLongException
-                - ResponseFailed
-              Comment: Igredient too long or ai event type failed
+              Comment: Igredient too long
               Next: Parse ingredient fail
               ResultPath: $.error
           Next: Parse ingredient success

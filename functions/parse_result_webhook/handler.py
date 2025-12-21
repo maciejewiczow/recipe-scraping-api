@@ -55,7 +55,8 @@ def handler(event: WebhookApiGatewayEvent, context: LambdaContext, *, env: Envir
 
         sfnClient = boto3.client("stepfunctions")
 
-        if openaiEvent.type in ["response.failed", "response.cancelled"]:
+        # if openaiEvent.type in ["response.failed", "response.cancelled"]:
+        if True:
             log.error(
                 "Openai response failed or cancelled",
                 extra={"openAiEvent": openaiEvent},
@@ -64,12 +65,12 @@ def handler(event: WebhookApiGatewayEvent, context: LambdaContext, *, env: Envir
                 sfnClient.send_task_failure(
                     taskToken=storedResponse.TaskToken,
                     error="ResponseFailed",
-                    cause=openaiEvent.data.id,  # pyright: ignore[reportAttributeAccessIssue]
                 )
             except sfnClient.exceptions.TaskTimedOut:
                 log.info(
                     "Other webhook probably already canceled the whole map operation"
                 )
+            finally:
                 return EmptyOkResponse()
 
         sfnClient.send_task_success(
