@@ -10,7 +10,30 @@ provider:
   region: eu-north-1
   architecture: arm64
   httpApi:
-    id: !Ref Gateway
+    name: ${self:service}-${self:provider.stage}
+    disableDefaultEndpoint: true
+    authorizers:
+      cognitoAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl:
+          Fn::Join:
+            - ""
+            - - "https://cognito-idp."
+              - ${self:provider.region}
+              - ".amazonaws.com/"
+              - Fn::ImportValue: RecipeScraperCognitoProd-UserPool
+        audience:
+          - Fn::ImportValue: RecipeScraperCognitoProd-UserPoolClient
+  domain:
+    name: ${param:domainName}
+    basePath: ""
+    certificateArn: ${env:DOMAIN_CERTIFICATE_ARN}
+    createRoute53Record: false
+    createRoute53IPv6Record: false
+    endpointType: REGIONAL
+    apiType: http
+    autoDomain: true
   layers:
     - !Ref SharedLambdaLayer
 
@@ -26,9 +49,7 @@ functions:
           path: /recipe/{recipeId}
           method: get
           authorizer:
-            type: jwt
-            id:
-              Ref: ApiGatewayAuthorizer
+            name: cognitoAuthorizer
     iam:
       inheritStatements: true
       role:
@@ -48,9 +69,7 @@ functions:
           path: /recipe/scrape
           method: post
           authorizer:
-            type: jwt
-            id:
-              Ref: ApiGatewayAuthorizer
+            name: cognitoAuthorizer
     iam:
       inheritStatements: true
       role:
@@ -202,9 +221,10 @@ functions:
               - sns:Publish
               - sns:DeleteEndpoint
             Resource: ${env:SNS_ANDROID_PLATFORM_APPLICATION_ARN}
-# used within processIngredients state machine definition file
+
 custom:
   step-functions:
+    # used within processIngredients state machine definition file
     process-ingredients:
       parseIngredientStartFnName: !Ref ParseDashingredientDashstartLambdaFunction
       parseIngredientFailFnName: !Ref ParseDashingredientDashfailLambdaFunction
@@ -229,17 +249,6 @@ custom:
       title: Recipe importer
       version: v1
       description: An api allowing to scrape a recipe from the web and convert it into a json document
-
-  customDomain:
-    domainName: ${param:domainName}
-    stage: prod
-    basePath: prod
-    createRoute53Record: false
-    createRoute53IPv6Record: false
-    endpointType: REGIONAL
-    apiType: http
-    autoDomain: true
-    certificateArn: ${env:DOMAIN_CERTIFICATE_ARN}
 
   scriptable:
     hooks:
@@ -320,5 +329,4 @@ resources:
 
 plugins:
   - serverless-step-functions
-  - serverless-domain-manager
   - serverless-scriptable-plugin

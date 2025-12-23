@@ -169,7 +169,11 @@ const getSecuritySchemes = () => {
         .flatMap(fn => fn.events)
         .filter(evt => evt.httpApi)
 
-    const uniqueAuthorizerNames = uniq(httpApiEvents.filter(evt => evt.httpApi.authorizer?.id?.Ref).map(evt => evt.httpApi.authorizer.id.Ref));
+    const uniqueAuthorizerNames = uniq(
+        httpApiEvents
+            .filter(evt => evt.httpApi.authorizer?.id?.Ref ?? evt.httpApi.authorizer?.name)
+            .map(evt => evt.httpApi.authorizer?.id?.Ref ?? evt.httpApi.authorizer?.name)
+    );
 
     return Object.fromEntries(
         uniqueAuthorizerNames.map(name => {
@@ -228,7 +232,7 @@ const openApiConfig = custom.openapi;
                                         operationId: data.operationId,
                                         responses: getResponsesObject(handlerData.models, data, fn),
                                         security: [
-                                            { [evt.httpApi.authorizer.id.Ref]: [] }
+                                            { [evt.httpApi.authorizer?.id?.Ref ?? evt.httpApi.authorizer?.name]: [] }
                                         ],
                                         requestBody: data.body ? {
                                             content: {
