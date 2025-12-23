@@ -212,7 +212,7 @@ const openApiConfig = custom.openapi;
                     description: openApiConfig.info.description,
                 },
                 servers: [
-                    { url: `https://${serverless.service.provider.domain.name}` }
+                    { url: `https://${serverless.service.provider?.domain?.name ?? custom?.customDomain?.name}` }
                 ],
                 paths: Object.fromEntries(
                     httpApiFunctions

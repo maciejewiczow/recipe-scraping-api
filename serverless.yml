@@ -25,15 +25,15 @@ provider:
               - Fn::ImportValue: RecipeScraperCognitoProd-UserPool
         audience:
           - Fn::ImportValue: RecipeScraperCognitoProd-UserPoolClient
-  domain:
-    name: ${param:domainName}
-    basePath: ""
-    certificateArn: ${env:DOMAIN_CERTIFICATE_ARN}
-    createRoute53Record: false
-    createRoute53IPv6Record: false
-    endpointType: REGIONAL
-    apiType: http
-    autoDomain: true
+  # domain:
+  #   name: ${param:domainName}
+  #   basePath: ""
+  #   certificateArn: ${env:DOMAIN_CERTIFICATE_ARN}
+  #   createRoute53Record: false
+  #   createRoute53IPv6Record: false
+  #   endpointType: REGIONAL
+  #   apiType: http
+  #   autoDomain: true
   layers:
     - !Ref SharedLambdaLayer
 
@@ -241,6 +241,17 @@ custom:
     useUv: true
     dockerizePip: non-linux
 
+  customDomain:
+    domainName: ${param:domainName}
+    stage: $default
+    basePath: ""
+    createRoute53Record: false
+    createRoute53IPv6Record: false
+    endpointType: REGIONAL
+    apiType: http
+    autoDomain: true
+    certificateArn: ${env:DOMAIN_CERTIFICATE_ARN}
+
   openapi:
     bucket:
       name: ${param:openapiBucketName}
@@ -274,59 +285,11 @@ layers:
 
 resources:
   Description: "CloudFormation functions template for ${self:service}"
-  Resources:
-    Gateway:
-      Type: AWS::ApiGatewayV2::Api
-      Properties:
-        Name: Gateway
-        ProtocolType: HTTP
-        DisableExecuteApiEndpoint: true
-      DeletionPolicy: Retain
-      UpdateReplacePolicy: Retain
-    GatewayStage:
-      Type: AWS::ApiGatewayV2::Stage
-      Properties:
-        ApiId: !Ref Gateway
-        StageName: prod
-        AutoDeploy: true
-    GatewayDomainMapping:
-      Type: AWS::ApiGatewayV2::ApiMapping
-      Properties:
-        ApiId: !Ref Gateway
-        DomainName: ${param:domainName}
-        Stage: prod
-      DependsOn: GatewayStage
-    ApiGatewayAuthorizer:
-      Type: AWS::ApiGatewayV2::Authorizer
-      Properties:
-        AuthorizerResultTtlInSeconds: 0
-        IdentitySource:
-          - $request.header.Authorization
-        Name: cognito-authorizer
-        ApiId: !Ref Gateway
-        AuthorizerType: JWT
-        JwtConfiguration:
-          Audience:
-            - Fn::ImportValue: RecipeScraperCognitoProd-UserPoolClient
-          Issuer:
-            Fn::Join:
-              - ""
-              - - "https://cognito-idp."
-                - "${opt:region, self:provider.region}"
-                - ".amazonaws.com/"
-                - Fn::ImportValue: RecipeScraperCognitoProd-UserPool
   Outputs:
     ProcessIngredientsStepFn:
       Value: !Ref ProcessIngredients
-    Gateway:
-      Value: !Ref Gateway
-      Export:
-        Name: !Sub "${AWS::StackName}-Gateway"
-    ApiEndpoint:
-      Value: !GetAtt Gateway.ApiEndpoint
-      Export:
-        Name: !Sub "${AWS::StackName}-ApiEndpoint"
 
 plugins:
   - serverless-step-functions
   - serverless-scriptable-plugin
+  - serverless-domain-manager
