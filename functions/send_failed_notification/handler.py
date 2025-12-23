@@ -14,7 +14,6 @@ from shared.models.database.RecipeDbItem import RecipeDbItemProjection
 from shared.models.lambda_events.FailHandlerEvent import (
     FailHandlerEventTypeAdapter,
     FailHandlerEvent,
-    SendOutOfCreditsNotificationOutput,
 )
 from shared.models.notifications.GCMNotification import (
     GCMNotification,
@@ -52,14 +51,6 @@ def handler(
             ]:
                 recipeId = myRecipeId
             case [IngredientToProcessWithLangInfoDTO(recipeId=myRecipeId)]:
-                recipeId = myRecipeId
-            case [
-                SendOutOfCreditsNotificationOutput(
-                    originalInput=IngredientToProcessWithLangInfoDTO(
-                        recipeId=myRecipeId
-                    )
-                )
-            ]:
                 recipeId = myRecipeId
             case _:
                 log.error("Unknown event type")

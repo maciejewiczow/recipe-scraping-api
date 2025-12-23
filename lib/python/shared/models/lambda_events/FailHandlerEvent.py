@@ -1,19 +1,10 @@
-from pydantic import BaseModel, TypeAdapter
+from pydantic import TypeAdapter
 from shared.models.DTO.ProcessIngredientsInput import (
-    IngredientToProcessWithLangInfoDTO,
     ProcessIngredientsInput,
 )
 from shared.models.DTO.ProcessedIngredient import ProcessedIngredientCollectionList
 
 
-class SendOutOfCreditsNotificationOutput(BaseModel):
-    originalInput: IngredientToProcessWithLangInfoDTO
-
-
-FailHandlerEvent = (
-    ProcessedIngredientCollectionList
-    | ProcessIngredientsInput
-    | list[SendOutOfCreditsNotificationOutput]
-)
+FailHandlerEvent = ProcessedIngredientCollectionList | ProcessIngredientsInput
 
 FailHandlerEventTypeAdapter = TypeAdapter(FailHandlerEvent)

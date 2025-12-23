@@ -121,7 +121,7 @@ States:
             MessageDeduplicationId.$: $.recipeId
             MessageGroupId.$: $.recipeId
           End: true
-          ResultPath: $.originalInput
+          ResultPath: $.result
     Next: AssembleRecipe
     Catch:
       - ErrorEquals:
