@@ -122,3 +122,11 @@ resources:
       Value: !Ref OutOfCreditsAdminNotificationsFifoTopic
       Export:
         Name: !Sub "${AWS::StackName}-OutOfCreditsAdminNotificationsTopic"
+    OutOfCreditsAdminNotificationEmailTopic:
+      Value: !Ref OutOfCreditsAdminNotificationEmailTopic
+      Export:
+        Name: !Sub "${AWS::StackName}-OutOfCreditsAdminNotificationEmailTopic"
+    OutOfCreditsAdminNotificationQueue:
+      Value: !Ref OutOfCreditsAdminNotificationQueue
+      Export:
+        Name: !Sub "${AWS::StackName}-OutOfCreditsAdminNotificationQueue"
