@@ -127,6 +127,6 @@ resources:
       Export:
         Name: !Sub "${AWS::StackName}-OutOfCreditsAdminNotificationEmailTopic"
     OutOfCreditsAdminNotificationQueue:
-      Value: !Ref OutOfCreditsAdminNotificationQueue
+      Value: !GetAtt OutOfCreditsAdminNotificationQueue.Arn
       Export:
         Name: !Sub "${AWS::StackName}-OutOfCreditsAdminNotificationQueue"
