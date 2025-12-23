@@ -60,7 +60,7 @@ def handler(
 
         log.debug("raw recipe from dynamo", extra={"rawRecipe": rawRecipe})
 
-        recipeRow = RecipeDbItem.from_dynamo(rawRecipe.get("Item", {}))
+        recipeRow = RecipeDbItem.from_dynamo(rawRecipe["Item"])  # pyright: ignore[reportTypedDictNotRequiredAccess]
 
         if not recipeRow.IsComplete or recipeRow.OwnerId != jwtClaims.userId:
             return NotFoundResponse()
@@ -75,3 +75,5 @@ def handler(
 
         log.exception("DynamoDB exception occured")
         raise
+    except KeyError:
+        return NotFoundResponse()
