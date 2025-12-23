@@ -223,6 +223,14 @@ functions:
             Resource: ${env:SNS_ANDROID_PLATFORM_APPLICATION_ARN}
   forward_outofcredits_notif:
     handler: functions/forward_outofcredits_notif/handler.handler
+    iam:
+      inheritStatements: true
+      role:
+        statements:
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationEmailTopic
     events:
       - sqs:
           arn: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationQueue
