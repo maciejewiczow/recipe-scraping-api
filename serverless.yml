@@ -235,7 +235,7 @@ functions:
       - sqs:
           arn: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationQueue
     environment:
-      EMAIL_TOPIC_ARN: !ImportValue !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationEmailTopic
+      EMAIL_TOPIC_ARN: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationEmailTopic
       POWERTOOLS_LOG_LEVEL: DEBUG
 
 custom:
