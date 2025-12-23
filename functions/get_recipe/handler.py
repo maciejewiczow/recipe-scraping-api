@@ -58,6 +58,8 @@ def handler(
             ReturnConsumedCapacity="NONE",
         )
 
+        log.debug("raw recipe from dynamo", extra={"rawRecipe": rawRecipe})
+
         recipeRow = RecipeDbItem.from_dynamo(rawRecipe.get("Item", {}))
 
         if not recipeRow.IsComplete or recipeRow.OwnerId != jwtClaims.userId:

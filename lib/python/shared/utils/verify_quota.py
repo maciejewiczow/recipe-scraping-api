@@ -102,8 +102,6 @@ def verify_user_quota(log: Logger):
                 )
 
                 kwargs["jwtClaims"] = claims
-
-                return func(event, *args, **kwargs)
             except ValidationError:
                 log.exception("Invalid quota table env config")
                 return InternalServerErrorResponse(
@@ -115,6 +113,8 @@ def verify_user_quota(log: Logger):
             except (InvalidClaimsError, ValueError):
                 log.exception("Cognito claims validation failed")
                 return ForbiddenResponse()
+
+            return func(event, *args, **kwargs)
 
         return wrapper
 

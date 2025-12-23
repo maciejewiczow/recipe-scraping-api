@@ -12,12 +12,13 @@ def validate_environment[T: BaseSettings](model: type[T], log: Logger):
         def wrapper(*args, **kwargs):
             try:
                 kwargs["env"] = model()
-                return func(*args, **kwargs)
             except ValidationError:
                 log.exception("Invalid lambda env config", {"env": os.environ})
                 return InternalServerErrorResponse(
                     body="Internal server error: invalid env config"
                 )
+
+            return func(*args, **kwargs)
 
         return wrapper
 
