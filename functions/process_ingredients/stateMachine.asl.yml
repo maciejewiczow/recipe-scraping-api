@@ -119,6 +119,7 @@ States:
               it up, white boy.', $.recipeId)
             Subject: Recipe parser ran out of money
             MessageDeduplicationId.$: $.recipeId
+            MessageGroupId.$: $.recipeId
           End: true
     Next: AssembleRecipe
     Catch:
