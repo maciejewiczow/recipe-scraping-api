@@ -5,11 +5,16 @@ import boto3
 import botocore
 import botocore.exceptions
 from pydantic import ValidationError
-from shared.models.DTO.ProcessIngredientsInput import IngredientToProcessWithLangInfoDTO
+from shared.models.DTO.ProcessIngredientsInput import (
+    IngredientToProcessDTO,
+    IngredientToProcessWithLangInfoDTO,
+)
+from shared.models.DTO.ProcessedIngredient import ProcessedIngredientCollection
 from shared.models.database.RecipeDbItem import RecipeDbItemProjection
 from shared.models.lambda_events.FailHandlerEvent import (
     FailHandlerEventTypeAdapter,
     FailHandlerEvent,
+    SendOutOfCreditsNotificationOutput,
 )
 from shared.models.notifications.GCMNotification import (
     GCMNotification,
@@ -39,13 +44,26 @@ def handler(
     env: Environment,
 ):
     try:
-        firstItem = event[0]
-
-        recipeId = (
-            firstItem.recipeId
-            if isinstance(firstItem, IngredientToProcessWithLangInfoDTO)
-            else firstItem.originalIngredient.recipeId
-        )
+        match event:
+            case [
+                ProcessedIngredientCollection(
+                    originalIngredient=IngredientToProcessDTO(recipeId=myRecipeId)
+                )
+            ]:
+                recipeId = myRecipeId
+            case [IngredientToProcessWithLangInfoDTO(recipeId=myRecipeId)]:
+                recipeId = myRecipeId
+            case [
+                SendOutOfCreditsNotificationOutput(
+                    originalInput=IngredientToProcessWithLangInfoDTO(
+                        recipeId=myRecipeId
+                    )
+                )
+            ]:
+                recipeId = myRecipeId
+            case _:
+                log.error("Unknown event type")
+                raise ValueError("Unknown event type")
 
         recipesTable = boto3.resource("dynamodb").Table(env.recipesTableName)
 
