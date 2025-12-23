@@ -221,6 +221,14 @@ functions:
               - sns:Publish
               - sns:DeleteEndpoint
             Resource: ${env:SNS_ANDROID_PLATFORM_APPLICATION_ARN}
+  forward_outofcredits_notif:
+    handler: functions/forward_outofcredits_notif/handler.handler
+    events:
+      - sqs:
+          arn: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationQueue
+    environment:
+      EMAIL_TOPIC_ARN: !ImportValue !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationEmailTopic
+      POWERTOOLS_LOG_LEVEL: DEBUG
 
 custom:
   step-functions:
