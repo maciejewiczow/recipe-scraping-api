@@ -29,7 +29,7 @@ resources:
       Properties:
         TopicArn: !Ref OutOfCreditsAdminNotificationsFifoTopic
         Protocol: sqs
-        Endpoint: !Sub "${OutOfCreditsAdminNotificationQueue}.fifo"
+        Endpoint: !GetAtt OutOfCreditsAdminNotificationQueue.QueueUrl
         RawMessageDelivery: true
     QueuePolicy:
       Type: AWS::SQS::QueuePolicy
