@@ -115,9 +115,10 @@ States:
           Resource: arn:aws:states:::sns:publish
           Parameters:
             TopicArn: ${self:custom.step-functions.process-ingredients.parseIngredientFailNotificationSNSTopic}
-            Message.$: $.recipeId
             MessageDeduplicationId.$: $.recipeId
             MessageGroupId.$: $.recipeId
+            Message:
+              recipeId.$: $.recipeId
           End: true
           ResultPath: $.result
     Next: AssembleRecipe
