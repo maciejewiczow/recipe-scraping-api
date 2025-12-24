@@ -23,22 +23,23 @@ resources:
       Properties:
         QueueName: OutOfCreditsAdminNotificationQueue.fifo
         FifoQueue: true
+        ContentBasedDeduplication: true
     QueueSubscription:
       Type: AWS::SNS::Subscription
       Properties:
         TopicArn: !Ref OutOfCreditsAdminNotificationsFifoTopic
         Protocol: sqs
-        Endpoint: !GetAtt OutOfCreditsAdminNotificationQueue.Arn
+        Endpoint: !Sub "${OutOfCreditsAdminNotificationQueue.Arn}.fifo"
+        RawMessageDelivery: true
     QueuePolicy:
       Type: AWS::SQS::QueuePolicy
       Properties:
         PolicyDocument:
-          PolicyDocument:
           Version: "2012-10-17"
           Statement:
             - Effect: Allow
               Principal:
-                Service: sns.amazonaws.com
+                Service: "sns.amazonaws.com"
               Action:
                 - sqs:SendMessage
               Resource: !GetAtt OutOfCreditsAdminNotificationQueue.Arn
