@@ -41,11 +41,8 @@ resources:
               Principal:
                 Service: "sns.amazonaws.com"
               Action:
-                - sqs:SendMessage
+                - SQS:SendMessage
               Resource: !GetAtt OutOfCreditsAdminNotificationQueue.Arn
-              Condition:
-                ArnEquals:
-                  aws:SourceArn: !Ref OutOfCreditsAdminNotificationsFifoTopic
         Queues:
           - !Ref OutOfCreditsAdminNotificationQueue
     OutOfCreditsAdminNotificationEmailTopic:
