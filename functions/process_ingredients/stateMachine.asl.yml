@@ -115,9 +115,8 @@ States:
           Resource: arn:aws:states:::sns:publish
           Parameters:
             TopicArn: ${self:custom.step-functions.process-ingredients.parseIngredientFailNotificationSNSTopic}
-            Message.$: States.Format('Ran out of AI credits while parsing recipe {}. Go top
-              it up, white boy.', $.recipeId)
-            Subject: Recipe parser ran out of money
+            Message.$: States.Format('{ "subject":\ "Recipe parser ran out of money", "message":\ "Ran out of AI credits while parsing recipe {}. Go top
+              it up, white boy." }', $.recipeId)
             MessageDeduplicationId.$: $.recipeId
             MessageGroupId.$: $.recipeId
           End: true
