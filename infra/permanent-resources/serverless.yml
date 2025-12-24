@@ -47,7 +47,7 @@ resources:
                 ArnEquals:
                   aws:SourceArn: !Ref OutOfCreditsAdminNotificationsFifoTopic
         Queues:
-          - !Ref OutOfCreditsAdminNotificationQueue
+          - !GetAtt OutOfCreditsAdminNotificationQueue.Arn
     OutOfCreditsAdminNotificationEmailTopic:
       Type: AWS::SNS::Topic
       Properties:
