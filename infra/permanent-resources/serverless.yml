@@ -29,6 +29,17 @@ resources:
         TopicArn: !Ref OutOfCreditsAdminNotificationsFifoTopic
         Protocol: sqs
         Endpoint: !GetAtt OutOfCreditsAdminNotificationQueue.Arn
+    QueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Effec: Allow
+          Action:
+            - SQS:*
+          Principal:
+            Service: sns.amazonaws.com
+        Queues:
+          - !Ref OutOfCreditsAdminNotificationQueue
     OutOfCreditsAdminNotificationEmailTopic:
       Type: AWS::SNS::Topic
       Properties:
