@@ -33,11 +33,18 @@ resources:
       Type: AWS::SQS::QueuePolicy
       Properties:
         PolicyDocument:
-          Effec: Allow
-          Action:
-            - SQS:*
-          Principal:
-            Service: sns.amazonaws.com
+          PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: sns.amazonaws.com
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt OutOfCreditsAdminNotificationQueue.Arn
+              Condition:
+                ArnEquals:
+                  aws:SourceArn: !Ref OutOfCreditsAdminNotificationsFifoTopic
         Queues:
           - !Ref OutOfCreditsAdminNotificationQueue
     OutOfCreditsAdminNotificationEmailTopic:
