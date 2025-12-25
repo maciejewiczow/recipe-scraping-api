@@ -18,9 +18,11 @@ class EmailContent:
     body: str
 
 
-MessagesType = dict[str, PushNotificationContent | EmailContent]
+MessagesType = dict[
+    str, Annotated[PushNotificationContent | EmailContent, Discriminator("type")]
+]
 
-MessagesTypeAdapter = TypeAdapter(Annotated[MessagesType, Discriminator("type")])
+MessagesTypeAdapter = TypeAdapter(MessagesType)
 
 
 def get_messages[T: (PushNotificationContent, EmailContent)](
