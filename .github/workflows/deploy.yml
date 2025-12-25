@@ -72,6 +72,6 @@ jobs:
             --param "domainName=${{ vars.DOMAIN_NAME }}" \
             --param "openapiBucketName=${{ vars.OPENAPI_BUCKET_NAME }}" \
             --param "aiModelName=${{ vars.AI_MODEL_NAME }}" \
-            --param "messagesS3Bucket=${{ vars.OPENAPI_BUCKET_NAME }}"
-            --param "messagesS3ObjectKey=${{ vars.MESSAGES_FILE_S3_KEY }}"
+            --param "messagesS3Bucket=${{ vars.OPENAPI_BUCKET_NAME }}" \
+            --param "messagesS3ObjectKey=${{ vars.MESSAGES_FILE_S3_KEY }}" \
             --verbose
