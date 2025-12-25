@@ -146,6 +146,7 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
+              - s3:ListBucket
             Resource: "${param:messagesS3BucketARN}/${param:messagesS3ObjectKey}"
 
   parse-ingredient-start:
@@ -230,6 +231,7 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
+              - s3:ListBucket
             Resource: "${param:messagesS3BucketARN}/${param:messagesS3ObjectKey}"
   forward_outofcredits_notif:
     handler: functions/forward_outofcredits_notif/handler.handler
@@ -244,6 +246,7 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
+              - s3:ListBucket
             Resource: "${param:messagesS3BucketARN}/${param:messagesS3ObjectKey}"
     events:
       - sqs:
