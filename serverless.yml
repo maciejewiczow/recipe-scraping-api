@@ -127,8 +127,8 @@ functions:
     environment:
       RECIPES_TABLE_NAME: !ImportValue RecipeScraperPermanentResourcesProd-RecipesTableName
       MESSAGES__FILE_KEY: parse-success-notification
-      MESSAGES__FILE_BUCKET: ${params:messagesS3Bucket}
-      MESSAGES__FILE_BUCKET_KEY: ${params:messagedS3ObjectKey}
+      MESSAGES__FILE_BUCKET: ${param:messagesS3Bucket}
+      MESSAGES__FILE_BUCKET_KEY: ${param:messagedS3ObjectKey}
     iam:
       inheritStatements: true
       role:
@@ -146,7 +146,7 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
-            Resource: "${params:messagesS3Bucket}/${params:messagedS3ObjectKey}"
+            Resource: "${param:messagesS3Bucket}/${param:messagedS3ObjectKey}"
 
   parse-ingredient-start:
     handler: functions/parse_ingredient_start/handler.handler
@@ -211,8 +211,8 @@ functions:
     environment:
       RECIPES_TABLE_NAME: !ImportValue RecipeScraperPermanentResourcesProd-RecipesTableName
       MESSAGES__FILE_KEY: parse-failed-notification
-      MESSAGES__FILE_BUCKET: ${params:messagesS3Bucket}
-      MESSAGES__FILE_BUCKET_KEY: ${params:messagedS3ObjectKey}
+      MESSAGES__FILE_BUCKET: ${param:messagesS3Bucket}
+      MESSAGES__FILE_BUCKET_KEY: ${param:messagedS3ObjectKey}
     iam:
       inheritStatements: true
       role:
@@ -230,7 +230,7 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
-            Resource: "${params:messagesS3Bucket}/${params:messagedS3ObjectKey}"
+            Resource: "${param:messagesS3Bucket}/${param:messagedS3ObjectKey}"
   forward_outofcredits_notif:
     handler: functions/forward_outofcredits_notif/handler.handler
     iam:
@@ -244,15 +244,15 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
-            Resource: "${params:messagesS3Bucket}/${params:messagedS3ObjectKey}"
+            Resource: "${param:messagesS3Bucket}/${param:messagedS3ObjectKey}"
     events:
       - sqs:
           arn: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationQueue
     environment:
       EMAIL_TOPIC_ARN: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationEmailTopic
       MESSAGES__FILE_KEY: out-of-credits-email
-      MESSAGES__FILE_BUCKET: ${params:messagesS3Bucket}
-      MESSAGES__FILE_BUCKET_KEY: ${params:messagedS3ObjectKey}
+      MESSAGES__FILE_BUCKET: ${param:messagesS3Bucket}
+      MESSAGES__FILE_BUCKET_KEY: ${param:messagedS3ObjectKey}
 
 custom:
   step-functions:
