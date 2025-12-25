@@ -37,8 +37,6 @@ def handler(event: ParseIngredientInput, context: LambdaContext, *, env: Environ
 
     _, Ingredients = create_chat_models(lang)
 
-    raise OutOfCreditsException()
-
     try:
         response = client.responses.create(
             prompt={
