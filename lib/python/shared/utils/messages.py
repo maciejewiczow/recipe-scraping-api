@@ -1,28 +1,26 @@
-from typing import Annotated, Literal
+from typing import Annotated, Dict, Literal
 
 from aws_lambda_powertools import Logger
 import boto3
-from pydantic import Discriminator, TypeAdapter, ValidationError
+from pydantic import BaseModel, Discriminator, TypeAdapter, ValidationError
 from shared.models.environment.MessagesConfig import MessagesConfig
 
 
-class PushNotificationContent:
+class PushNotificationContent(BaseModel):
     type: Literal["push"]
     title: str
     body: str
 
 
-class EmailContent:
+class EmailContent(BaseModel):
     type: Literal["email"]
     subject: str
     body: str
 
 
-MessagesType = dict[
-    str, Annotated[PushNotificationContent | EmailContent, Discriminator("type")]
-]
-
-MessagesTypeAdapter = TypeAdapter(MessagesType)
+MessagesTypeAdapter = TypeAdapter(
+    dict[str, Annotated[PushNotificationContent | EmailContent, Discriminator("type")]]
+)
 
 
 def get_messages[T: (PushNotificationContent, EmailContent)](
