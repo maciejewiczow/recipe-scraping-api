@@ -22,6 +22,7 @@ from shared.utils.dump_response import dump_response
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from shared.utils.dynamodb import DynamoDBItemNotFoundException, is_not_found_exception
 from shared.utils.environment import validate_environment
+from shared.utils.messages import PushNotificationContent, get_messages
 from .env import Environment
 
 log = Logger("assemble-recipe")
@@ -36,6 +37,8 @@ log = Logger("assemble-recipe")
 def handler(
     event: ProcessIngredientsMapResult, context: LambdaContext, *, env: Environment
 ):
+    message = get_messages(env.notification, PushNotificationContent, log)
+
     recipesTable = boto3.resource("dynamodb").Table(env.recipesTableName)
 
     try:
@@ -141,7 +144,7 @@ def handler(
                 Message=GCMNotification(
                     GCM=Notification(
                         notification=NotificationContent(
-                            **env.notification.model_dump()
+                            body=message.body, title=message.title
                         ),
                         data=RecipeReadyNotificationData(recipeId=recipeItem.RecipeId),
                     )

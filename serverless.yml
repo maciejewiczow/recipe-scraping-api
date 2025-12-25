@@ -126,8 +126,9 @@ functions:
     handler: functions/assemble_recipe/handler.handler
     environment:
       RECIPES_TABLE_NAME: !ImportValue RecipeScraperPermanentResourcesProd-RecipesTableName
-      NOTIFICATION__BODY: ${param:recipeReadyNotificationBody}
-      NOTIFICATION__TITLE: ${param:recipeReadyNotificationTitle}
+      MESSAGES__FILE_KEY: parse-success-notification
+      MESSAGES__FILE_BUCKET: ${params:messagesS3Bucket}
+      MESSAGES__FILE_BUCKET_KEY: ${params:messagedS3ObjectKey}
     iam:
       inheritStatements: true
       role:
@@ -142,6 +143,10 @@ functions:
               - sns:Publish
               - sns:DeleteEndpoint
             Resource: ${env:SNS_ANDROID_PLATFORM_APPLICATION_ARN}
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: "${params:messagesS3Bucket}/${params:messagedS3ObjectKey}"
 
   parse-ingredient-start:
     handler: functions/parse_ingredient_start/handler.handler
@@ -205,8 +210,9 @@ functions:
     handler: functions/send_failed_notification/handler.handler
     environment:
       RECIPES_TABLE_NAME: !ImportValue RecipeScraperPermanentResourcesProd-RecipesTableName
-      FAIL_NOTIFICATION__BODY: ${param:recipeParsingFailedNotificationBody}
-      FAIL_NOTIFICATION__TITLE: ${param:recipeParsingFailedNotificationTitle}
+      MESSAGES__FILE_KEY: parse-failed-notification
+      MESSAGES__FILE_BUCKET: ${params:messagesS3Bucket}
+      MESSAGES__FILE_BUCKET_KEY: ${params:messagedS3ObjectKey}
     iam:
       inheritStatements: true
       role:
@@ -221,6 +227,10 @@ functions:
               - sns:Publish
               - sns:DeleteEndpoint
             Resource: ${env:SNS_ANDROID_PLATFORM_APPLICATION_ARN}
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: "${params:messagesS3Bucket}/${params:messagedS3ObjectKey}"
   forward_outofcredits_notif:
     handler: functions/forward_outofcredits_notif/handler.handler
     iam:
@@ -231,12 +241,18 @@ functions:
             Action:
               - sns:Publish
             Resource: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationEmailTopic
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: "${params:messagesS3Bucket}/${params:messagedS3ObjectKey}"
     events:
       - sqs:
           arn: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationQueue
     environment:
       EMAIL_TOPIC_ARN: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationEmailTopic
-      POWERTOOLS_LOG_LEVEL: DEBUG
+      MESSAGES__FILE_KEY: out-of-credits-email
+      MESSAGES__FILE_BUCKET: ${params:messagesS3Bucket}
+      MESSAGES__FILE_BUCKET_KEY: ${params:messagedS3ObjectKey}
 
 custom:
   step-functions:
@@ -271,7 +287,7 @@ custom:
   openapi:
     bucket:
       name: ${param:openapiBucketName}
-      key: openapi-${self:service}-${self:provider.stage}.json
+      key: openapi/openapi-${self:service}-${self:provider.stage}.json
     info:
       title: Recipe importer
       version: v1

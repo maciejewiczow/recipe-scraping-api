@@ -25,6 +25,7 @@ from shared.models.notifications.RecipeReadyNotificationData import (
 )
 from shared.utils.dump_response import dump_response
 from shared.utils.environment import validate_environment
+from shared.utils.messages import PushNotificationContent, get_messages
 from .env import Environment
 
 log = Logger("send_failed_notification")
@@ -42,6 +43,10 @@ def handler(
     *,
     env: Environment,
 ):
+    message = get_messages(
+        env.failedProcessingNotification, PushNotificationContent, log
+    )
+
     try:
         match event:
             case [
@@ -74,7 +79,7 @@ def handler(
                 Message=GCMNotification(
                     GCM=Notification(
                         notification=NotificationContent(
-                            **env.failedProcessingNotification.model_dump()
+                            body=message.body, title=message.title
                         ),
                         data=RecipeReadyNotificationData(recipeId=recipeId),
                     )

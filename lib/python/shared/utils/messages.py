@@ -1,0 +1,51 @@
+from typing import Annotated, Literal
+
+from aws_lambda_powertools import Logger
+import boto3
+from pydantic import Discriminator, TypeAdapter, ValidationError
+from shared.models.environment.MessagesConfig import MessagesConfig
+
+
+class PushNotificationContent:
+    type: Literal["push"]
+    title: str
+    body: str
+
+
+class EmailContent:
+    type: Literal["email"]
+    subject: str
+    body: str
+
+
+MessagesType = dict[str, PushNotificationContent | EmailContent]
+
+MessagesTypeAdapter = TypeAdapter(Annotated[MessagesType, Discriminator("type")])
+
+
+def get_messages[T: (PushNotificationContent, EmailContent)](
+    config: MessagesConfig,
+    msgType: type[T],
+    log: Logger,
+) -> T:
+    s3 = boto3.client("s3")
+
+    try:
+        msg = MessagesTypeAdapter.validate_json(
+            s3.get_object(Bucket=config.fileBucket, Key=config.fileBucket)
+        )[config.key]
+
+        if msg is not msgType:
+            log.error(
+                "Unexpected message type",
+                extra={"config": config, "expectedType": msgType},
+            )
+            raise ValueError("Unexpected message type")
+
+        return msg  # pyright: ignore[reportReturnType]
+    except KeyError:
+        log.exception("Missing message key", extra={"config": config})
+        raise
+    except ValidationError:
+        log.exception("Invalid messages schema", extra={"config": config})
+        raise

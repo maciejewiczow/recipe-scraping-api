@@ -65,8 +65,6 @@ jobs:
         run: >
           npx serverless deploy \
             --param "recipeTTL=${{ vars.RECIPE_TTL }}" \
-            --param "recipeReadyNotificationBody=${{ vars.RECIPE_READY_NOTIFICATION_BODY }}" \
-            --param "recipeReadyNotificationTitle=${{ vars.RECIPE_READY_NOTIFICATION_TITLE }}" \
             --param "aiBaseUrl=${{ vars.AI_API_BASE_URL }}" \
             --param "promptIdPL=${{ vars.AI_PARSING_PROMPT_ID_PL }}" \
             --param "promptIdEN=${{ vars.AI_PARSING_PROMPT_ID_EN }}" \
@@ -74,6 +72,6 @@ jobs:
             --param "domainName=${{ vars.DOMAIN_NAME }}" \
             --param "openapiBucketName=${{ vars.OPENAPI_BUCKET_NAME }}" \
             --param "aiModelName=${{ vars.AI_MODEL_NAME }}" \
-            --param "recipeParsingFailedNotificationTitle=${{ vars.RECIPE_FAILED_NOTIFICATION_TITLE }}" \
-            --param "recipeParsingFailedNotificationBody=${{ vars.RECIPE_FAILED_NOTIFICATION_BODY }}" \
+            --param "messagesS3Bucket=${{ vars.OPENAPI_BUCKET_NAME }}"
+            --param "messagedS3ObjectKey=${{ vars.MESSAGES_FILE_S3_KEY }}"
             --verbose
