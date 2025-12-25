@@ -34,7 +34,7 @@ def get_messages[T: (PushNotificationContent, EmailContent)](
             s3.get_object(Bucket=config.fileBucket, Key=config.bucketKey)["Body"].read()
         )[config.key]
 
-        if msg is not msgType:
+        if type(msg) is not msgType:
             raise ValueError("Unexpected message type")
 
         return msg  # pyright: ignore[reportReturnType]
