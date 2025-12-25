@@ -146,7 +146,7 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
-            Resource: "${param:messagesS3Bucket}/${param:messagesS3ObjectKey}"
+            Resource: "${param:messagesS3Bucket}/*"
 
   parse-ingredient-start:
     handler: functions/parse_ingredient_start/handler.handler
@@ -230,7 +230,7 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
-            Resource: "${param:messagesS3Bucket}/${param:messagesS3ObjectKey}"
+            Resource: "${param:messagesS3Bucket}/*"
   forward_outofcredits_notif:
     handler: functions/forward_outofcredits_notif/handler.handler
     iam:
@@ -244,7 +244,7 @@ functions:
           - Effect: Allow
             Action:
               - s3:GetObject
-            Resource: "${param:messagesS3Bucket}/${param:messagesS3ObjectKey}"
+            Resource: "${param:messagesS3Bucket}/*"
     events:
       - sqs:
           arn: !ImportValue RecipeScraperPermanentResourcesProd-OutOfCreditsAdminNotificationQueue
