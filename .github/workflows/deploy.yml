@@ -74,4 +74,5 @@ jobs:
             --param "aiModelName=${{ vars.AI_MODEL_NAME }}" \
             --param "messagesS3Bucket=${{ vars.OPENAPI_BUCKET_NAME }}" \
             --param "messagesS3ObjectKey=${{ vars.MESSAGES_FILE_S3_KEY }}" \
+            --param "messagesS3BucketARN=${{ vars.OPENAPI_BUCKET_ARN }}" \
             --verbose
