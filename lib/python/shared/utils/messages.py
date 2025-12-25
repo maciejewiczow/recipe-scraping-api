@@ -1,5 +1,4 @@
-from typing import Annotated, Dict, Literal
-
+from typing import Annotated, Literal
 from aws_lambda_powertools import Logger
 import boto3
 from pydantic import BaseModel, Discriminator, TypeAdapter, ValidationError
@@ -36,10 +35,6 @@ def get_messages[T: (PushNotificationContent, EmailContent)](
         )[config.key]
 
         if msg is not msgType:
-            log.error(
-                "Unexpected message type",
-                extra={"config": config, "expectedType": msgType},
-            )
             raise ValueError("Unexpected message type")
 
         return msg  # pyright: ignore[reportReturnType]
@@ -48,4 +43,10 @@ def get_messages[T: (PushNotificationContent, EmailContent)](
         raise
     except ValidationError:
         log.exception("Invalid messages schema", extra={"config": config})
+        raise
+    except ValueError:
+        log.exception(
+            "Unexpected message type",
+            extra={"config": config, "expectedType": msgType},
+        )
         raise
