@@ -32,7 +32,7 @@ def get_messages[T: (PushNotificationContent, EmailContent)](
 
     try:
         msg = MessagesTypeAdapter.validate_json(
-            s3.get_object(Bucket=config.fileBucket, Key=config.fileBucket)
+            s3.get_object(Bucket=config.fileBucket, Key=config.bucketKey)
         )[config.key]
 
         if msg is not msgType:
