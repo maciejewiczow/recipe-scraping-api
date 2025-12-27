@@ -126,9 +126,9 @@ functions:
     handler: functions/assemble_recipe/handler.handler
     environment:
       RECIPES_TABLE_NAME: !ImportValue RecipeScraperPermanentResourcesProd-RecipesTableName
-      MESSAGES__FILE_KEY: parse-success-notification
-      MESSAGES__FILE_BUCKET: ${param:messagesS3Bucket}
-      MESSAGES__FILE_BUCKET_KEY: ${param:messagesS3ObjectKey}
+      NOTIFICATION__FILE_KEY: parse-success-notification
+      NOTIFICATION__FILE_BUCKET: ${param:messagesS3Bucket}
+      NOTIFICATION__FILE_BUCKET_KEY: ${param:messagesS3ObjectKey}
     iam:
       inheritStatements: true
       role:
@@ -211,9 +211,9 @@ functions:
     handler: functions/send_failed_notification/handler.handler
     environment:
       RECIPES_TABLE_NAME: !ImportValue RecipeScraperPermanentResourcesProd-RecipesTableName
-      MESSAGES__FILE_KEY: parse-failed-notification
-      MESSAGES__FILE_BUCKET: ${param:messagesS3Bucket}
-      MESSAGES__FILE_BUCKET_KEY: ${param:messagesS3ObjectKey}
+      FAIL_NOTIFICATION__FILE_KEY: parse-failed-notification
+      FAIL_NOTIFICATION__FILE_BUCKET: ${param:messagesS3Bucket}
+      FAIL_NOTIFICATION__FILE_BUCKET_KEY: ${param:messagesS3ObjectKey}
     iam:
       inheritStatements: true
       role:
