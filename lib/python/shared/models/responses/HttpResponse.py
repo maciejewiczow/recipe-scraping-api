@@ -56,7 +56,7 @@ class OkResponse[T: BaseModel | str](HttpResponse):
     def headers(self) -> dict[str, str]:
         return {
             "Content-Type": "application/json"
-            if isinstance(self, BaseModel)
+            if isinstance(self.body, BaseModel)
             else "text/plain",
             **self._headers,
         }
