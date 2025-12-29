@@ -9,6 +9,7 @@ provider:
   stage: prod
   region: eu-north-1
   architecture: arm64
+  timeout: 30
   httpApi:
     name: ${self:service}-${self:provider.stage}
     disableDefaultEndpoint: true
